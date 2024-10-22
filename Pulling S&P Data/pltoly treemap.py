@@ -4,7 +4,7 @@ import pandas as pd
 import os
 
 # Define the path to the CSV file that will store cached market cap data
-cache_file = 'market_cap_cache.csv'
+cache_file = '../market_cap_cache.csv'
 
 
 # Define a function that takes a stock ticker symbol as input and returns its market capitalization
@@ -25,7 +25,7 @@ if os.path.exists(cache_file):
     print("Loaded market cap data from cache.")  # Inform the user that cached data is being used
 else:
     # If the cache file does not exist, load the S&P 500 data from a separate CSV file containing tickers and industries
-    sp500_df = pd.read_csv('sp500_companies_industries.csv')
+    sp500_df = pd.read_csv('../sp500_companies_industries.csv')
 
     # Initialize an empty list to store market cap data as dictionaries for each company
     treemap_data = []
