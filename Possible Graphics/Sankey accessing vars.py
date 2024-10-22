@@ -35,7 +35,7 @@ def load_data(ticker, year):  # Loads the financial data.
      #   'Diluted EPS',
     #    'Basic EPS',
         #'Diluted NI Availto Com Stockholders',
-        #'Net Income Common Stockholders',
+        'Net Income Common Stockholders',
         'Net Income',
         'Minority Interests',
         'Net Income Including Noncontrolling Interests',
@@ -55,7 +55,7 @@ def load_data(ticker, year):  # Loads the financial data.
         #'Interest Income Non Operating',
         'Operating Income',
         'Operating Expense',
-       # 'Other Operating Expenses',
+        'Other Operating Expenses',
       #  'Depreciation Amortization Depletion Income Statement',
        # 'Depreciation And Amortization In Income Statement',
         #'Amortization',
@@ -79,9 +79,17 @@ def load_data(ticker, year):  # Loads the financial data.
 
 # Load the financial data
 financial_metrics = load_data(ticker, year)
+total_revenue = financial_metrics['Total_Revenue']/1000000000
 gross_profit_value = financial_metrics['Gross_Profit']/1000000000
-
-# Access the Total Revenue
+cost_revenue = financial_metrics['Cost_Of_Revenue']/1000000000
+operating_income = financial_metrics['Operating_Income']/1000000000
+operating_expense = financial_metrics['Operating_Expense']/1000000000
+tax_provision = financial_metrics['Tax_Provision']/1000000000
+sga = financial_metrics['Selling_General_And_Administration']/1000000000
+other = financial_metrics['Other_Income_Expense']/1000000000
+net_income = financial_metrics['Net_Income']/1000000000
+ga = financial_metrics['General_And_Administrative_Expense']/1000000000
+other_operating_expenses= financial_metrics['Other_Operating_Expenses']/1000000000
 
 
 
@@ -124,27 +132,27 @@ label = ['Revenue',  # this one is fine
          'G&A'
          ]
 
-color_for_nodes = ['steelblue', 'green', 'red', 'green', 'red', 'red', 'red', 'green', 'red', 'red',
+color_for_nodes = ['steelblue', 'green', 'red', 'green', 'red', 'green', 'red', 'red',
                    'red', 'red', 'red']
 
-color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed',
+color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed', 
                    'lightgreen',
                    'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
 
 # Data
-source = [0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 4, 4]
-target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+source = [0, 0, 1, 1, 3, 3, 3, 4, 4, 4]
+target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 #gross profit, cost of revenues,
-value = [gross_profit_value, financial_metrics['Cost_Of_Revenue']/1000000000, 17.1, 20.8, 11.8, 19.3, 13.9, 2.3, 0.9, 10.3, 6.9, financial_metrics['General_And_Administrative_Expense']/1000000000]
+value = [gross_profit_value, cost_revenue, operating_income, operating_expense, net_income, tax_provision, other, sga, other_operating_expenses]
 
 link = dict(source=source, target=target, value=value, color=color_link)
 node = dict(label=label, pad=35, thickness=20)
 data = go.Sankey(link=link, node=node)
 
-x = [0.1, 0.35, 0.35, 0.6, 0.6, 0.6,
-     0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
-y = [0.40, 0.25, 0.70, 0.1, 0.40,
-     0.70, 0.90, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75]
+x = [0.1, 0.35, 0.35, 0.6, 
+     0.6, 0.85, 0.85, 0.85, 0.85, 0.85]
+y = [0.40, 0.25, 0.70, 0.1,
+      0.45, 0.0, 0.15, 0.30, 0.45, 0.60]
 x = [.001 if v == 0 else .999 if v == 1 else v for v in x]
 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]
 
@@ -225,10 +233,6 @@ fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.59, y=0.41, show
 fig.add_annotation(
     dict(font=dict(color="maroon", size=12), x=0.34, y=0.08, showarrow=False, text='<b>Cost of<br>Revenues</b>'))
 fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.34, y=0.05, showarrow=False, text='<b>$31.2B</b>'))
-
-# TAC
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.65, y=0.30, showarrow=False, text='<b>TAC</b>'))
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.68, y=0.25, showarrow=False, text='<b>$11.8B</b>'))
 
 # Cost of Revenues - Others
 fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.68, y=0.10, showarrow=False, text='<b>Others</b>'))
