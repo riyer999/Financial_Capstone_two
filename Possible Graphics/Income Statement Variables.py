@@ -1,6 +1,6 @@
 import pickle
 
-ticker = 'KO'
+ticker = 'PEP'
 year = '2023'
 
 def load_data(ticker, year):  # Loads the financial data.
@@ -8,31 +8,31 @@ def load_data(ticker, year):  # Loads the financial data.
         allData = pickle.load(file)
 
     income_statement = allData[ticker]['income_statement']
-    print(income_statement)
+    #print(income_statement)
 
     # List of keys to extract from the income statement
     keys = [
-      #  'Tax Effect Of Unusual Items',
-      #  'Tax Rate For Calcs',
-       # 'Normalized EBITDA',
+        'Tax Effect Of Unusual Items',
+        'Tax Rate For Caalcs',
+        'Normalized EBITDA',
         'Total Unusual Items',
         'Total Unusual Items Excluding Goodwill',
-      #  'Reconciled Depreciation',
-        #'Reconciled Cost Of Revenue',
-       # 'EBITDA',
-       # 'EBIT',
+        #'Net Income From Continuing Operation Net Minori...',
+        'Reconciled Depreciation',
+        'EBITDA',
+        'EBIT',
         'Net Interest Income',
         'Interest Expense',
-        'Interest Income',
         'Normalized Income',
-     #   'Total Expenses',
+        #'Net Income From Continuing And Discontinued Ope...',
+        'Total Expenses',
         'Total Operating Income As Reported',
-     #   'Diluted Average Shares',
+        'Diluted Average Shares',
         'Basic Average Shares',
-     #   'Diluted EPS',
-    #    'Basic EPS',
-        #'Diluted NI Availto Com Stockholders',
-        #'Net Income Common Stockholders',
+        'Diluted EPS',
+        'Basic EPS',
+        'Diluted NI Availto Com Stockholders',
+        'Net Income Common Stockholders',
         'Net Income',
         'Minority Interests',
         'Net Income Including Noncontrolling Interests',
@@ -40,33 +40,16 @@ def load_data(ticker, year):  # Loads the financial data.
         'Tax Provision',
         'Pretax Income',
         'Other Income Expense',
-       # 'Other Non Operating Income Expenses',
-        #'Special Income Charges',
-       # 'Write Off',
-        'Impairment Of Capital Assets',
-
-        #'Earnings From Equity Interest',
-        #'Gain On Sale Of Security',
+        'Other Non Operating Income Expenses',
+        'Special Income Charges',
         'Net Non Operating Interest Income Expense',
         'Interest Expense Non Operating',
-        #'Interest Income Non Operating',
         'Operating Income',
         'Operating Expense',
-       # 'Other Operating Expenses',
-      #  'Depreciation Amortization Depletion Income Statement',
-       # 'Depreciation And Amortization In Income Statement',
-        #'Amortization',
-        #'Amortization Of Intangibles Income Statement',
-        'Selling General And Administration',
-        #'General And Administrative Expense',
-        #'Selling And Marketing Expense',
-        #'General And Administrative Expense',
-        #'Other Gand A',
-        #'Salaries And Wages',
         'Gross Profit',
         'Cost Of Revenue',
-        'Total Revenue',
-        'Operating Revenue'
+        'Total Revenue'
+
     ]
 
     # Create a dictionary to hold variable names and their corresponding values

@@ -79,9 +79,10 @@ def load_data(ticker, year):  # Loads the financial data.
 
 # Load the financial data
 financial_metrics = load_data(ticker, year)
+gross_profit_value = financial_metrics['Gross_Profit']/1000000000
 
 # Access the Total Revenue
-print(financial_metrics['Total_Revenue'])
+
 
 
 ###################################################
@@ -134,7 +135,7 @@ color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed',
 source = [0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 4, 4]
 target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 #gross profit, cost of revenues,
-value = [financial_metrics['Gross_Profit']/1000000000, financial_metrics['Cost_Of_Revenue']/1000000000, 17.1, 20.8, 11.8, 19.3, 13.9, 2.3, 0.9, 10.3, 6.9, financial_metrics['General_And_Administrative_Expense']/1000000000]
+value = [gross_profit_value, financial_metrics['Cost_Of_Revenue']/1000000000, 17.1, 20.8, 11.8, 19.3, 13.9, 2.3, 0.9, 10.3, 6.9, financial_metrics['General_And_Administrative_Expense']/1000000000]
 
 link = dict(source=source, target=target, value=value, color=color_link)
 node = dict(label=label, pad=35, thickness=20)
@@ -184,7 +185,7 @@ fig.add_annotation(dict(font=dict(color="steelblue", size=12), x=0.08, y=0.96, s
 # Gross Profit
 fig.add_annotation(
     dict(font=dict(color="green", size=12), x=0.315, y=0.99, showarrow=False, text='<b>Gross Profit</b>'))
-fig.add_annotation(dict(font=dict(color="green", size=12), x=0.33, y=0.96, showarrow=False, text='<b>$37.1B</b>'))
+fig.add_annotation(dict(font=dict(color="green", size=12), x=0.33, y=0.96, showarrow=False, text=f'<b>${gross_profit_value:.1f}B</b>'))
 
 # Operating Profit
 fig.add_annotation(

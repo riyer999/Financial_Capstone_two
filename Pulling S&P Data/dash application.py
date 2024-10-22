@@ -3,6 +3,11 @@ import pandas as pd
 import os
 from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
+import plotly.graph_objects as go
+import pickle
+
+# Initialize the Dash application
+app = Dash(__name__, suppress_callback_exceptions=True)
 
 # File path for the cache
 cache_file = 'market_cap_cache.csv'
@@ -47,41 +52,21 @@ else:
     cached_data.to_csv(cache_file, index=False)
     print("Market cap data fetched and cached.")
 
-# Group by Industry to calculate total market cap per industry
+# Calculate total market cap per industry
 industry_market_caps = cached_data.groupby('Industry')['MarketCap'].sum().reset_index()
 industry_market_caps.columns = ['Industry', 'TotalMarketCap']
 
 # Merge total market cap back into the main DataFrame
 treemap_df = pd.merge(cached_data, industry_market_caps, on='Industry')
 
-# Initialize Dash application
-app = Dash(__name__)
-
-# Layout of the Dash application
-app.layout = html.Div([
-    html.H1("S&P 500 Market Capitalization Treemap"),
-    dcc.Graph(
-        id='treemap',
-        config={'displayModeBar': False}  # Hide mode bar for a cleaner look
-    ),
-    html.Div(id='company-details', style={'margin-top': '20px'}),
-    dcc.Graph(id='industry-pie-chart', style={'margin-top': '20px'})
-])
-
-# Create the treemap plot
-@app.callback(
-    Output('treemap', 'figure'),
-    Input('treemap', 'id')  # Dummy input to trigger the initial render
-)
-def update_treemap(_):
-    # Create the treemap plot
+# Create the treemap plot using Plotly Express
+def create_treemap():
     fig = px.treemap(treemap_df,
                      path=['Industry', 'Company'],
                      values='MarketCap',
                      title='Market Capitalization Treemap for S&P 500 Industries and Companies',
                      color='MarketCap',
-                     color_continuous_scale='Blues',
-                     hover_data=['MarketCap'])
+                     color_continuous_scale='Blues')
 
     # Update hovertemplate for better information
     fig.update_traces(hovertemplate=
@@ -93,43 +78,102 @@ def update_treemap(_):
                       '</extra>')
     return fig
 
-# Callback for displaying company details and pie chart when a company is clicked
-@app.callback(
-    Output('company-details', 'children'),
-    Output('industry-pie-chart', 'figure'),
-    Input('treemap', 'clickData')
-)
-def display_company_details(clickData):
-    if clickData is None:
-        return "Click on a company to see details.", {}  # Default message and empty chart
+# Load the financial data for the selected company
+def load_data(ticker, year='2023'):
+    with open('allData.pkl', 'rb') as file:
+        allData = pickle.load(file)
 
-    # Extract company name from click data
-    company_name = clickData['points'][0]['label']
-    selected_company = cached_data[cached_data['Company'] == company_name].iloc[0]
+    income_statement = allData[ticker]['income_statement']
 
-    # Get details for the selected company
-    ticker = selected_company['Ticker']
-    market_cap = selected_company['MarketCap']
-    industry = selected_company['Industry']
-
-    # Prepare details to display
-    details = [
-        html.H4(f"Company: {company_name}"),
-        html.P(f"Ticker: {ticker}"),
-        html.P(f"Industry: {industry}"),
-        html.P(f"Market Cap: ${market_cap:,.2f}")
+    # List of keys to extract from the income statement
+    keys = [
+        'Gross Profit',
+        'Cost Of Revenue',
+        'Total Revenue',
+        'Operating Expense'
     ]
 
-    # Create a pie chart for the industry's market cap distribution
-    industry_data = treemap_df[treemap_df['Industry'] == industry]
+    # Create a dictionary to hold variable names and their corresponding values
+    variable_names = {key.replace(" ", "_"): income_statement.loc[key, year].item() for key in keys}
 
-    pie_fig = px.pie(industry_data,
-                     values='MarketCap',
-                     names='Company',
-                     title=f'Market Cap Distribution in {industry}',
-                     hover_data=['MarketCap'])
+    return variable_names  # Return the dictionary with variable names and values
 
-    return details, pie_fig
+# Define the layout of the Dash application
+# Define the layout of the Dash application
+app.layout = html.Div([
+    html.H1("S&P 500 Market Capitalization Treemap"),  # Title for the page
+    html.Div(id='treemap-area', children=[
+        dcc.Graph(id='treemap', figure=create_treemap()),  # Your treemap component
+        dcc.Graph(id='company-graphic', style={'display': 'none', 'height': '300px'})  # Initially hidden
+    ])
+])
+
+
+@app.callback(
+    [Output('company-graphic', 'figure'), Output('company-graphic', 'style')],
+    [Input('treemap', 'clickData')]
+)
+def update_graphic(clickData):
+    if clickData is not None:
+        company_name = clickData['points'][0]['label']
+
+        # Normalize the case and strip whitespace
+        company_name_normalized = company_name.strip().lower()
+
+        # Print for debugging
+        print(f"Clicked company: {company_name_normalized}")
+
+        # Normalize the case and strip whitespace for comparison
+        treemap_df['Normalized_Company'] = treemap_df['Company'].str.strip().str.lower()
+
+        # Find the ticker using a case-insensitive comparison
+        matched_tickers = treemap_df[treemap_df['Normalized_Company'] == company_name_normalized]['Ticker']
+
+        # Print matched tickers for debugging
+        print(f"Matched tickers for {company_name_normalized}: {matched_tickers.values}")
+
+        if not matched_tickers.empty:
+            ticker = matched_tickers.values[0]
+
+            # Load financial data for the selected company
+            financial_metrics = load_data(ticker)
+
+            # Prepare data for the bar chart
+            metrics = [
+                financial_metrics['Gross_Profit'] / 1e9,  # Convert to billions
+                financial_metrics['Cost_Of_Revenue'] / 1e9,
+                financial_metrics['Total_Revenue'] / 1e9,
+                financial_metrics['Operating_Expense'] / 1e9
+            ]
+            metric_labels = ['Gross Profit', 'Cost of Revenue', 'Total Revenue', 'Operating Expenses']
+
+            # Create a bar chart using Plotly
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=metric_labels,
+                y=metrics,
+                marker_color=['blue', 'red', 'green', 'orange'],
+                text=[f'{metric:.2f}B' for metric in metrics],
+                textposition='auto'
+            ))
+
+            # Customize layout
+            fig.update_layout(
+                title=f"Financial Metrics for {company_name.title()} in 2023",
+                xaxis_title="Metrics",
+                yaxis_title="Amount (in Billions)",
+                showlegend=False,
+                height=300,  # Ensure height fits well over the treemap
+                margin=dict(l=0, r=0, t=30, b=0)  # Remove extra margins if needed
+            )
+
+            # Return the figure and style to show the graphic
+            return fig, {'display': 'block'}  # Ensure this is correctly set
+        else:
+            print(f"No matched tickers for: {company_name_normalized}. Skipping...")
+            return {}, {'display': 'none'}  # Hide the graphic if the ticker is not found
+    else:
+        return {}, {'display': 'none'}  # Hide the graphic if no company is clicked
 
 # Run the app
 if __name__ == '__main__':
