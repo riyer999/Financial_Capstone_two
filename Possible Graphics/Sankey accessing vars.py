@@ -12,6 +12,7 @@ def load_data(ticker, year):  # Loads the financial data.
         allData = pickle.load(file)
 
     income_statement = allData[ticker]['income_statement']
+    print(income_statement)
 
     # List of keys to extract from the income statement
     keys = [
@@ -135,7 +136,7 @@ label = ['Revenue',  # this one is fine
 color_for_nodes = ['steelblue', 'green', 'red', 'green', 'red', 'green', 'red', 'red',
                    'red', 'red', 'red']
 
-color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed', 
+color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed',
                    'lightgreen',
                    'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
 
@@ -149,7 +150,7 @@ link = dict(source=source, target=target, value=value, color=color_link)
 node = dict(label=label, pad=35, thickness=20)
 data = go.Sankey(link=link, node=node)
 
-x = [0.1, 0.35, 0.35, 0.6, 
+x = [0.1, 0.35, 0.35, 0.6,
      0.6, 0.85, 0.85, 0.85, 0.85, 0.85]
 y = [0.40, 0.25, 0.70, 0.1,
       0.45, 0.0, 0.15, 0.30, 0.45, 0.60]
