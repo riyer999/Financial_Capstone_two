@@ -16,26 +16,14 @@ def load_data(ticker, year):  # Loads the financial data.
 
     # List of keys to extract from the income statement
     keys = [
-      #  'Tax Effect Of Unusual Items',
-      #  'Tax Rate For Calcs',
-       # 'Normalized EBITDA',
         'Total Unusual Items',
         'Total Unusual Items Excluding Goodwill',
-      #  'Reconciled Depreciation',
-        #'Reconciled Cost Of Revenue',
-       # 'EBITDA',
-       # 'EBIT',
         'Net Interest Income',
         'Interest Expense',
         'Interest Income',
         'Normalized Income',
-     #   'Total Expenses',
         'Total Operating Income As Reported',
-     #   'Diluted Average Shares',
         'Basic Average Shares',
-     #   'Diluted EPS',
-    #    'Basic EPS',
-        #'Diluted NI Availto Com Stockholders',
         'Net Income Common Stockholders',
         'Net Income',
         'Minority Interests',
@@ -44,29 +32,14 @@ def load_data(ticker, year):  # Loads the financial data.
         'Tax Provision',
         'Pretax Income',
         'Other Income Expense',
-       # 'Other Non Operating Income Expenses',
-        #'Special Income Charges',
-       # 'Write Off',
         'Impairment Of Capital Assets',
-
-        #'Earnings From Equity Interest',
-        #'Gain On Sale Of Security',
         'Net Non Operating Interest Income Expense',
         'Interest Expense Non Operating',
-        #'Interest Income Non Operating',
         'Operating Income',
         'Operating Expense',
         'Other Operating Expenses',
-      #  'Depreciation Amortization Depletion Income Statement',
-       # 'Depreciation And Amortization In Income Statement',
-        #'Amortization',
-        #'Amortization Of Intangibles Income Statement',
         'Selling General And Administration',
         'General And Administrative Expense',
-      #  'Selling And Marketing Expense',
-        #'General And Administrative Expense',
-        #'Other Gand A',
-        #'Salaries And Wages',
         'Gross Profit',
         'Cost Of Revenue',
         'Total Revenue',
@@ -74,24 +47,30 @@ def load_data(ticker, year):  # Loads the financial data.
     ]
 
     # Create a dictionary to hold variable names and their corresponding values
-    variable_names = {key.replace(" ", "_"): income_statement.loc[key, year].item() for key in keys}
+    variable_names = {}
+    for key in keys:
+        variable_name = key.replace(" ", "_")
+        # Try to extract the value, return 0 if key doesn't exist
+        try:
+            variable_names[variable_name] = abs(income_statement.loc[key, year].item())
+        except KeyError:
+            variable_names[variable_name] = 0
 
     return variable_names  # Return the dictionary with variable names and values
 
 # Load the financial data
 financial_metrics = load_data(ticker, year)
-total_revenue = financial_metrics['Total_Revenue']/1000000000
-gross_profit_value = financial_metrics['Gross_Profit']/1000000000
-cost_revenue = financial_metrics['Cost_Of_Revenue']/1000000000
-operating_income = financial_metrics['Operating_Income']/1000000000
-operating_expense = financial_metrics['Operating_Expense']/1000000000
-tax_provision = financial_metrics['Tax_Provision']/1000000000
-sga = financial_metrics['Selling_General_And_Administration']/1000000000
-other = financial_metrics['Other_Income_Expense']/1000000000
-net_income = financial_metrics['Net_Income']/1000000000
-ga = financial_metrics['General_And_Administrative_Expense']/1000000000
-other_operating_expenses= financial_metrics['Other_Operating_Expenses']/1000000000
-
+total_revenue = financial_metrics['Total_Revenue'] / 1000000000
+gross_profit_value = financial_metrics['Gross_Profit'] / 1000000000
+cost_revenue = financial_metrics['Cost_Of_Revenue'] / 1000000000
+operating_income = financial_metrics['Operating_Income'] / 1000000000
+operating_expense = financial_metrics['Operating_Expense'] / 1000000000
+tax_provision = financial_metrics['Tax_Provision'] / 1000000000
+sga = financial_metrics['Selling_General_And_Administration'] / 1000000000
+other = financial_metrics['Other_Income_Expense'] / 1000000000
+net_income = financial_metrics['Net_Income'] / 1000000000
+ga = financial_metrics['General_And_Administrative_Expense'] / 1000000000
+other_operating_expenses = financial_metrics['Other_Operating_Expenses'] / 1000000000
 
 
 ###################################################
@@ -123,26 +102,23 @@ label = ['Revenue',  # this one is fine
          'Cost of Revenues',
          'Operating Profit',
          'Operating Expenses',
-         'TAC',
-         'Others',
          'Net Profit',
          'Tax',
          'Other',
-         'R&D',
-         'S&M',
-         'G&A'
+         'SG&A',
+         'Other Expenses'
          ]
 
 color_for_nodes = ['steelblue', 'green', 'red', 'green', 'red', 'green', 'red', 'red',
-                   'red', 'red', 'red']
+                   'red', 'red']
 
 color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed',
                    'lightgreen',
-                   'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
+                   'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
 
 # Data
-source = [0, 0, 1, 1, 3, 3, 3, 4, 4, 4]
-target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+source = [0, 0, 1, 1, 3, 3, 3, 4, 4]
+target = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 #gross profit, cost of revenues,
 value = [gross_profit_value, cost_revenue, operating_income, operating_expense, net_income, tax_provision, other, sga, other_operating_expenses]
 
@@ -188,55 +164,56 @@ fig.update_traces(node_color=color_for_nodes,
 # y = [  0.40, 0.25, 0.70, 0.1, 0.40,
 #     0.70, 0.90, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75]
 # Revenue
-fig.add_annotation(dict(font=dict(color="steelblue", size=12), x=0.08, y=0.99, showarrow=False, text='<b>Revenue</b>'))
-fig.add_annotation(dict(font=dict(color="steelblue", size=12), x=0.08, y=0.96, showarrow=False, text='<b>$69.1B</b>'))
+
+# Revenue
+if total_revenue > 0:
+    fig.add_annotation(dict(font=dict(color="steelblue", size=12), x=0.08, y=0.99, showarrow=False, text='<b>Revenue</b>'))
+    fig.add_annotation(dict(font=dict(color="steelblue", size=12), x=0.08, y=0.96, showarrow=False, text=f'<b>${total_revenue:.1f}B</b>'))
 
 # Gross Profit
-fig.add_annotation(
-    dict(font=dict(color="green", size=12), x=0.315, y=0.99, showarrow=False, text='<b>Gross Profit</b>'))
-fig.add_annotation(dict(font=dict(color="green", size=12), x=0.33, y=0.96, showarrow=False, text=f'<b>${gross_profit_value:.1f}B</b>'))
+if gross_profit_value > 0:
+    fig.add_annotation(dict(font=dict(color="green", size=12), x=0.315, y=0.99, showarrow=False, text='<b>Gross Profit</b>'))
+    fig.add_annotation(dict(font=dict(color="green", size=12), x=0.33, y=0.96, showarrow=False, text=f'<b>${gross_profit_value:.1f}B</b>'))
 
 # Operating Profit
-fig.add_annotation(
-    dict(font=dict(color="green", size=12), x=0.61, y=1.05, showarrow=False, text='<b>Operating Profit</b>'))
-fig.add_annotation(dict(font=dict(color="green", size=12), x=0.61, y=1.02, showarrow=False, text='<b>$16.1B</b>'))
+if operating_income > 0:
+    fig.add_annotation(dict(font=dict(color="green", size=12), x=0.61, y=1.05, showarrow=False, text='<b>Operating Profit</b>'))
+    fig.add_annotation(dict(font=dict(color="green", size=12), x=0.61, y=1.02, showarrow=False, text=f'<b>${operating_income:.1f}B</b>'))
 
 # Net Profit
-fig.add_annotation(dict(font=dict(color="green", size=12), x=0.95, y=1.05, showarrow=False, text='<b>Net Profit</b>'))
-fig.add_annotation(dict(font=dict(color="green", size=12), x=0.94, y=1, showarrow=False, text='<b>$13.9B</b>'))
+if net_income > 0:
+    fig.add_annotation(dict(font=dict(color="green", size=12), x=0.95, y=1.05, showarrow=False, text='<b>Net Profit</b>'))
+    fig.add_annotation(dict(font=dict(color="green", size=12), x=0.94, y=1, showarrow=False, text=f'<b>${net_income:.1f}B</b>'))
 
-# Operating Profit Tax
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.93, y=0.9, showarrow=False, text='<b>Tax</b>'))
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.85, showarrow=False, text='<b>$2.3B</b>'))
+# Tax
+if tax_provision > 0:
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.93, y=0.9, showarrow=False, text='<b>Tax</b>'))
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.85, showarrow=False, text=f'<b>${tax_provision:.1f}B</b>'))
 
-# Operating Profit Other
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.75, showarrow=False, text='<b>Other</b>'))
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.70, showarrow=False, text='<b>$0.9B</b>'))
+# Other
+if other > 0:
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.75, showarrow=False, text='<b>Other</b>'))
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.70, showarrow=False, text=f'<b>${other:.1f}B</b>'))
 
-# Operating Profit R&D
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.93, y=0.58, showarrow=False, text='<b>R&D</b>'))
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.94, y=0.53, showarrow=False, text='<b>$10.3B</b>'))
+# SG&A
+if sga > 0:
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.93, y=0.58, showarrow=False, text='<b>SG&A</b>'))
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.93, y=0.52, showarrow=False, text=f'<b>${sga:.1f}B</b>'))
 
-# Operating Profit S&M
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.93, y=0.43, showarrow=False, text='<b>S&M</b>'))
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.38, showarrow=False, text='<b>$6.9B</b>'))
-
-# Operating Profit G&A
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.93, y=0.25, showarrow=False, text='<b>G&A</b>'))
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.20, showarrow=False, text='<b>$3.6B</b>'))
+# Other Operating Expenses
+if other_operating_expenses > 0:
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.95, y=0.40, showarrow=False, text='<b>Other<br>Operating<br>Expenses</b>'))
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.26, showarrow=False, text=f'<b>${other_operating_expenses:.1f}B</b>'))
 
 # Operating Expenses
-fig.add_annotation(
-    dict(font=dict(color="maroon", size=12), x=0.59, y=0.47, showarrow=False, text='<b>Operating<br>expenses</b>'))
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.59, y=0.41, showarrow=False, text='<b>$20.8B</b>'))
+if operating_expense > 0:
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.59, y=0.41, showarrow=False, text='<b>Operating<br>Expenses</b>'))
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.59, y=0.34, showarrow=False, text=f'<b>${operating_expense:.1f}B</b>'))
 
 # Cost of Revenues
-fig.add_annotation(
-    dict(font=dict(color="maroon", size=12), x=0.34, y=0.08, showarrow=False, text='<b>Cost of<br>Revenues</b>'))
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.34, y=0.05, showarrow=False, text='<b>$31.2B</b>'))
+if cost_revenue > 0:
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.34, y=0.08, showarrow=False, text='<b>Cost of<br>Revenues</b>'))
+    fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.34, y=0.05, showarrow=False, text=f'<b>${cost_revenue:.1f}B</b>'))
 
-# Cost of Revenues - Others
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.68, y=0.10, showarrow=False, text='<b>Others</b>'))
-fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.68, y=0.05, showarrow=False, text='<b>$19.3B</b>'))
 
 fig.show()
