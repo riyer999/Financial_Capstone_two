@@ -250,7 +250,7 @@ def update_graphic(clickData):
 
                 fig.update_layout(
                     hovermode='x',
-                    title=f"<span style='font-size:36px;color:steelblue;'><b>{company_name}KO FY23 Income Statement</b></span>",
+                    title=f"<span style='font-size:36px;color:steelblue;'><b>{company_name} FY23 Income Statement</b></span>",
                     font=dict(size=10, color='white'),
                     paper_bgcolor='#F8F8FF'
                 )
