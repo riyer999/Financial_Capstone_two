@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pickle
 
+
 # Initialize the Dash application
 app = Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
@@ -334,7 +335,7 @@ def update_graphic(clickData):
                     fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.34, y=0.05, showarrow=False,
                                             text=f'<b>${cost_revenue:.1f}B</b>'))
 
-                fig.show()
+                #fig.show()
                 return fig, {'display': 'block'}  # Show the Sankey diagram
         else:
             return go.Figure(), {'display': 'none'}  # Return empty figure if no company is found
