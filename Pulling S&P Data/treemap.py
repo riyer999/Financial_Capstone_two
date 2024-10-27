@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import squarify
 
 # Read the S&P 500 data from the CSV file
-sp500_df = pd.read_csv('sp500_companies_industries.csv')
+sp500_df = pd.read_csv('../sp500_companies_industries.csv')
 
 
 # Function to get market capitalization
