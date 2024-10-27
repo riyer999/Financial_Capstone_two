@@ -1,5 +1,5 @@
 import plotly.graph_objects as go
-
+from plotly.subplots import make_subplots
 import yfinance as yf
 ################################################
 import pickle
@@ -74,6 +74,32 @@ other_operating_expenses = financial_metrics['Other_Operating_Expenses'] / 10000
 
 
 ###################################################
+
+## market cap code start
+
+#initialize market cap bar
+bar_fig = go.Figure()
+
+#plot the market cap
+categories = ['Market Cap']
+values = [293.2]
+
+
+bar_fig.add_trace(go.Bar(
+    x=categories,
+    y=values,
+    marker_color='steelblue'
+))
+
+bar_fig.update_layout(
+    title='Financial Summary',
+    xaxis_title='Categories',
+    yaxis_title='Amount (in Billions)',
+    barmode = 'group',
+    paper_bgcolor='#F8F8FF'
+)
+
+## market cap code end
 color_link = ['#000000', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',
               '#008941', '#006FA6', '#A30059', '#FFDBE5', '#7A4900',
               '#0000A6', '#63FFAC', '#B79762', '#004D43', '#8FB0FF',
@@ -216,4 +242,37 @@ if cost_revenue > 0:
     fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.34, y=0.05, showarrow=False, text=f'<b>${cost_revenue:.1f}B</b>'))
 
 
-fig.show()
+# create sublots to hold both market cap bar and sankey
+bothFigs = make_subplots(
+    rows=1, cols=2,
+    column_widths=[0.05, 0.95],
+    specs = [[{"type": "bar"}, {"type": "sankey"}]]
+)
+
+bothFigs.update_xaxes(showticklabels=False, tickvals=[], row=1, col=1)
+
+for trace in bar_fig.data:
+    bothFigs.add_trace(trace, row=1, col=1)
+
+for trace in fig.data:
+    bothFigs.add_trace(trace, row=1, col=2)
+
+bothFigs.update_layout(
+    title_text="Market Cap and Financial Summary",
+    paper_bgcolor='#F8F8FF'
+)
+
+bothFigs.update_yaxes(
+    scaleanchor=None,
+    row=1, col=2
+)
+
+#positioning for Sankey graph
+bothFigs.update_traces(
+    selector=dict(type='sankey'),
+    domain=dict(x=[0.00, 1.00], y=[0.01,0.5])
+)
+bothFigs['layout']['xaxis'].update(domain=[0.0, .06])  # X domain for the bar chart
+bothFigs['layout']['yaxis'].update(domain=[0.22, 1])    # Y domain for the bar chart
+
+bothFigs.show()

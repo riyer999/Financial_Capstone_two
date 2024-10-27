@@ -6,7 +6,7 @@ import yfinance as yf
 #initialize market cap bar
 bar_fig = go.Figure()
 
-#plot it
+#plot the market cap
 categories = ['Market Cap']
 values = [293.2]
 
