@@ -151,7 +151,7 @@ fig = go.Figure(data=[go.Sankey(
 
 fig.update_layout(
     hovermode='x',
-    title="<span style='font-size:36px;color:steelblue;'><b>KO FY23 Income Statement</b></span>",
+    title=f"<span style='font-size:36px;color:steelblue;'><b>{ticker} FY23 Income Statement</b></span>",
     font=dict(size=10, color='white'),
     paper_bgcolor='#F8F8FF'
 )
