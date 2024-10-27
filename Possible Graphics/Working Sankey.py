@@ -7,6 +7,8 @@ import pickle
 ticker = 'KO'
 year = '2023'
 
+
+
 def load_data(ticker, year):  # Loads the financial data.
     with open('allData.pkl', 'rb') as file:  # Dictionary with the financial data information
         allData = pickle.load(file)

@@ -204,7 +204,7 @@ fig.update_traces(
     selector=dict(type='sankey'),
     domain=dict(x=[0.00, 1.00], y=[0.01,0.5])
 )
-fig['layout']['xaxis'].update(domain=[0.0, .06])  # X domain for the bar chart
-fig['layout']['yaxis'].update(domain=[0.22, 1])    # Y domain for the bar chart
+fig['layout']['xaxis'].update(domain=[0.0, .06])  # X domain for the bar chart ###
+fig['layout']['yaxis'].update(domain=[0.22, 1])    # Y domain for the bar chart ###
 
 fig.show()
