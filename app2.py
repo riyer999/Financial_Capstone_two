@@ -107,7 +107,7 @@ def load_data(ticker, year='2023'):
         'Operating Income',
         'Operating Expense',
         'Other Operating Expenses',
-        'Selling General And Administration',
+        'Selling General And Administrative',
         'General And Administrative Expense',
         'Gross Profit',
         'Cost Of Revenue',
@@ -142,7 +142,7 @@ if selected_company:
         operating_income = financial_metrics['Operating_Income'] / 1000000000
         operating_expense = financial_metrics['Operating_Expense'] / 1000000000
         tax_provision = financial_metrics['Tax_Provision'] / 1000000000
-        sga = financial_metrics['Selling_General_And_Administration'] / 1000000000
+        sga = financial_metrics['Selling_General_And_Administrative'] / 1000000000
         other = financial_metrics['Other_Income_Expense'] / 1000000000
         net_income = financial_metrics['Net_Income'] / 1000000000
         ga = financial_metrics['General_And_Administrative_Expense'] / 1000000000
