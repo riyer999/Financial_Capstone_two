@@ -392,9 +392,9 @@ def update_graphic(clickData):
                 )
                 fig['layout']['xaxis'].update(domain=[0.0, .06])  # X domain for the bar chart ###
                 fig['layout']['yaxis'].update(domain=[0.22, 1])  # Y domain for the bar chart ###
-                fig.show()
+                #fig.show()
 
-                return sankey_fig, {'display': 'block'}  # Show the Sankey diagram
+                return fig, {'display': 'block'}  # Show the Sankey diagram
         else:
             return go.Figure(), {'display': 'none'}  # Return empty figure if no company is found
     else:
