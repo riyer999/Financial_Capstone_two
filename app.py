@@ -67,14 +67,14 @@ def create_treemap():
     fig = px.treemap(treemap_df,
                      path=['Industry', 'Company'],
                      values='MarketCap',
-                     title='Market Capitalization Treemap for S&P 500 Industries and Companies',
                      color='MarketCap',
                      color_continuous_scale='Blues')
 
     return fig
 
 # Load financial data for a given company and year
-def load_data(ticker, year='2023'):
+
+def load_data(ticker, years=['2020', '2021', '2022', '2023']):
     with open('allData.pkl', 'rb') as file:
         allData = pickle.load(file)
 
@@ -113,32 +113,55 @@ def load_data(ticker, year='2023'):
     ]
 
     variable_names = {}
-    for key in keys:
-        variable_name = key.replace(" ", "_")
-        # Try to extract the value, return 0 if key doesn't exist
-        try:
-            variable_names[variable_name] = abs(income_statement.loc[key, year].item())
-        except KeyError:
-            variable_names[variable_name] = 0
+    # Loop through each year and each key
+    for year in years:
+        for key in keys:
+            variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
+            try:
+                variable_names[variable_name] = abs(income_statement.loc[key, year].item())
+            except KeyError:
+                variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
     return variable_names  # Return the dictionary with variable names and values
 
+
+
+# Define the layout of the Dash application
 # Define the layout of the Dash application
 app.layout = html.Div([
     html.H1("S&P 500 Market Capitalization Treemap"),  # Title for the page
-    html.Div(id='treemap-area', children=[
-        dcc.Graph(id='treemap', figure=create_treemap()),  # Treemap component
-        dcc.Graph(id='company-graphic', style={'display': 'none', 'height': '500px'})  # Initially hidden
-    ])
+    dcc.Graph(id='treemap', figure=create_treemap()),  # Treemap component
+    dcc.Dropdown(
+        id='year-dropdown',  # ID for the dropdown
+        options=[
+            {'label': '2020', 'value': '2020'},
+            {'label': '2021', 'value': '2021'},
+            {'label': '2022', 'value': '2022'},
+            {'label': '2023', 'value': '2023'}
+        ],
+        value='2023',  # Default value
+        style={'display': 'none'}  # Initially hidden
+    ),
+    dcc.Graph(id='company-graphic', style={'display': 'none', 'height': '500px'})  # Initially hidden
 ])
+
+
 
 # Callback to update the graphic based on treemap click
 @app.callback(
-    [Output('company-graphic', 'figure'), Output('company-graphic', 'style')],
-    [Input('treemap', 'clickData')]
+    [Output('company-graphic', 'figure'),
+     Output('company-graphic', 'style'),
+     Output('year-dropdown', 'style')],  # Output for the dropdown style
+    [Input('treemap', 'clickData'),
+     Input('year-dropdown', 'value')]  # Include year selection
 )
-def update_graphic(clickData):
+def update_graphic(clickData, selected_year):
+
+    if clickData is None:
+        return {}, {'display': 'none'}, {'display': 'none'}
+
     if clickData is not None:
+
         company_name = clickData['points'][0]['label']
 
         # Normalize the company name for matching
@@ -151,21 +174,22 @@ def update_graphic(clickData):
             ticker = matched_tickers.values[0]
 
             # Load financial data for the selected company
-            financial_metrics = load_data(ticker)
-
+            financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
+            print(financial_metrics.keys())
             if financial_metrics:
 
-                total_revenue = financial_metrics['Total_Revenue'] / 1000000000
-                gross_profit_value = financial_metrics['Gross_Profit'] / 1000000000
-                cost_revenue = financial_metrics['Cost_Of_Revenue'] / 1000000000
-                operating_income = financial_metrics['Operating_Income'] / 1000000000
-                operating_expense = financial_metrics['Operating_Expense'] / 1000000000
-                tax_provision = financial_metrics['Tax_Provision'] / 1000000000
-                sga = financial_metrics['Selling_General_And_Administration'] / 1000000000
-                other = financial_metrics['Other_Income_Expense'] / 1000000000
-                net_income = financial_metrics['Net_Income'] / 1000000000
-                ga = financial_metrics['General_And_Administrative_Expense'] / 1000000000
-                other_operating_expenses = financial_metrics['Other_Operating_Expenses'] / 1000000000
+                # Extract the financial metrics you need
+                total_revenue = financial_metrics[f'Total_Revenue_{selected_year}'] / 1e9
+                gross_profit_value = financial_metrics[f'Gross_Profit_{selected_year}'] / 1e9
+                cost_revenue = financial_metrics[f'Cost_Of_Revenue_{selected_year}'] / 1e9
+                operating_income = financial_metrics[f'Operating_Income_{selected_year}'] / 1e9
+                operating_expense = financial_metrics[f'Operating_Expense_{selected_year}'] / 1e9
+                tax_provision = financial_metrics[f'Tax_Provision_{selected_year}'] / 1e9
+                sga = financial_metrics[f'Selling_General_And_Administration_{selected_year}'] / 1e9
+                other = financial_metrics[f'Other_Income_Expense_{selected_year}'] / 1e9
+                net_income = financial_metrics[f'Net_Income_{selected_year}'] / 1e9
+                ga = financial_metrics[f'General_And_Administrative_Expense_{selected_year}'] / 1e9
+                other_operating_expenses = financial_metrics[f'Other_Operating_Expenses_{selected_year}'] / 1e9
                 ###################################################
 
                 # initialize market cap bar
@@ -291,21 +315,7 @@ def update_graphic(clickData):
 
                 fig.update_layout(
                     title_text="Market Cap and Financial Summary",
-                    paper_bgcolor='#F8F8FF',
-                    sliders=[{
-                        'active': 0,
-                        'currentvalue': {'prefix': 'Year: '},
-                        'pad': {'b': 10},
-                        'len': 0.9,
-                        'x': 0.1,
-                        'y': -0.1,
-                        'steps': [{
-                            'label': str(year),
-                            'method': 'update',
-                            'args': [{'visible': [True] + [False] * (len(sankey_fig.data) - 1)}]
-                            # Adjust this for multiple years
-                        } for year in range(2021, 2024)]  # Example years; adjust as needed
-                    }]
+                    paper_bgcolor='#F8F8FF'
                 )
 
                 fig.update_yaxes(scaleanchor=None, row=1, col=2)
@@ -319,9 +329,9 @@ def update_graphic(clickData):
                 fig['layout']['yaxis'].update(domain=[0.22, 1])  # Y domain for the bar chart ###
 
                 # Show figure
-                fig.show()
 
-                return fig, {'display': 'block'}  # Show the Sankey diagram
+
+                return fig, {'display': 'block'}, {'display': 'block'}  # Show the Sankey diagram
         else:
             return go.Figure(), {'display': 'none'}  # Return empty figure if no company is found
     else:
