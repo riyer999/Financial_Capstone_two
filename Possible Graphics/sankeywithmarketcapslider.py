@@ -6,7 +6,7 @@ bar_fig = go.Figure()
 
 # Plot the market cap
 categories = ['Market Cap']
-values = [293.2]
+values = [get_market_cap(ticker)]
 
 bar_fig.add_trace(go.Bar(
     x=categories,
@@ -45,40 +45,40 @@ color_link = ['#000000', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',
               '#CB7E98', '#A4E804', '#324E72', '#6A3A4C'
              ]
 
-label = ['Revenue',
-         'Gross Profit',
-         'Cost of Revenues',
-         'Operating Profit',
-         'Operating Expenses',
-         'TAC',
-         'Others',
-         'Net Profit',
-         'Tax',
-         'Other',
-         'R&D',
-         'S&M',
-         'G&A'
-        ]
+label = ['Revenue',  # this one is fine
+                         'Gross Profit',  # this one is also fine
+                         'Cost of Revenues',
+                         'Operating Profit',
+                         'Operating Expenses',
+                         'Net Profit',
+                         'Tax',
+                         'Other',
+                         'SG&A',
+                         'Other Expenses'
+                         ]
 
-color_for_nodes = ['steelblue', 'green', 'red', 'green', 'red', 'red', 'red', 'green', 'red', 'red',
-                   'red', 'red', 'red']
+color_for_nodes = ['steelblue', 'green', 'red', 'green', 'red', 'green', 'red', 'red',
+                                   'red', 'red']
 
-color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed', 'PaleVioletRed', 
-                   'PaleVioletRed', 'lightgreen', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 
-                   'PaleVioletRed', 'PaleVioletRed']
+color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed',
+                                   'lightgreen',
+                                   'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
 
 # Data 
-source = [0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 4, 4]
-target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-value = [37.9, 31.2, 17.1, 20.8, 11.8, 19.3, 13.9, 2.3, 0.9, 10.3, 6.9, 3.6]
+source = [0, 0, 1, 1, 3, 3, 3, 4, 4]
+target = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+value = [gross_profit_value, cost_revenue, operating_income, operating_expense, net_income,
+                         tax_provision, other, sga, other_operating_expenses]
 
 link = dict(source=source, target=target, value=value, color=color_link)
 node = dict(label=label, pad=35, thickness=20)
 data = go.Sankey(link=link, node=node)
 
 # Coordinates for nodes
-x = [0.1, 0.35, 0.35, 0.6, 0.6, 0.6, 0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
-y = [0.40, 0.25, 0.70, 0.1, 0.40, 0.70, 0.90, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75]
+x = [0.1, 0.35, 0.35, 0.6,
+                     0.6, 0.85, 0.85, 0.85, 0.85, 0.85]
+y = [0.40, 0.25, 0.70, 0.1,
+                     0.45, 0.0, 0.15, 0.30, 0.45, 0.60]
 x = [.001 if v == 0 else .999 if v == 1 else v for v in x]
 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]  
 

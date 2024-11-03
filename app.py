@@ -154,13 +154,6 @@ def update_graphic(clickData):
             financial_metrics = load_data(ticker)
 
             if financial_metrics:
-                # Extract financial metrics
-                # total_revenue = financial_metrics.get('Total_Revenue', 0) / 1e9
-                # gross_profit_value = financial_metrics.get('Gross_Profit', 0) / 1e9
-                # cost_revenue = financial_metrics.get('Cost_Of_Revenue', 0) / 1e9
-                # operating_income = financial_metrics.get('Operating_Income', 0) / 1e9
-                # operating_expense = financial_metrics.get('Operating_Expense', 0) / 1e9
-                # net_income = financial_metrics.get('Net_Income', 0) / 1e9
 
                 total_revenue = financial_metrics['Total_Revenue'] / 1000000000
                 gross_profit_value = financial_metrics['Gross_Profit'] / 1000000000
@@ -178,7 +171,7 @@ def update_graphic(clickData):
                 # initialize market cap bar
                 bar_fig = go.Figure()
 
-                # plot the market cap
+                # Plot the market cap
                 categories = ['Market Cap']
                 values = [get_market_cap(ticker)]
 
@@ -195,6 +188,7 @@ def update_graphic(clickData):
                     barmode='group',
                     paper_bgcolor='#F8F8FF'
                 )
+
                 color_link = ['#000000', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',
                               '#008941', '#006FA6', '#A30059', '#FFDBE5', '#7A4900',
                               '#0000A6', '#63FFAC', '#B79762', '#004D43', '#8FB0FF',
@@ -240,7 +234,6 @@ def update_graphic(clickData):
                 # Data
                 source = [0, 0, 1, 1, 3, 3, 3, 4, 4]
                 target = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-                # gross profit, cost of revenues,
                 value = [gross_profit_value, cost_revenue, operating_income, operating_expense, net_income,
                          tax_provision, other, sga, other_operating_expenses]
 
@@ -248,6 +241,7 @@ def update_graphic(clickData):
                 node = dict(label=label, pad=35, thickness=20)
                 data = go.Sankey(link=link, node=node)
 
+                # Coordinates for nodes
                 x = [0.1, 0.35, 0.35, 0.6,
                      0.6, 0.85, 0.85, 0.85, 0.85, 0.85]
                 y = [0.40, 0.25, 0.70, 0.1,
@@ -256,8 +250,7 @@ def update_graphic(clickData):
                 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]
 
                 sankey_fig = go.Figure(data=[go.Sankey(
-
-                    textfont=dict(color="rgba(0,0,0,0)", size=1),
+                    textfont=dict(color="black", size=10),
                     node=dict(
                         pad=35,
                         line=dict(color="white", width=1),
@@ -273,126 +266,60 @@ def update_graphic(clickData):
 
                 sankey_fig.update_layout(
                     hovermode='x',
-                    title=f"<span style='font-size:36px;color:steelblue;'><b>{company_name} FY23 Income Statement</b></span>",
+                    title="<span style='font-size:36px;color:steelblue;'><b>KO FY23 Income Statement</b></span>",
                     font=dict(size=10, color='white'),
                     paper_bgcolor='#F8F8FF'
                 )
 
                 sankey_fig.update_traces(node_color=color_for_nodes,
-                                  link_color=color_for_links)
+                                         link_color=color_for_links)
 
-                # x = [   0.1, 0.35, 0.35,  0.6, 0.6, 0.6,
-                #      0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
-                # y = [  0.40, 0.25, 0.70, 0.1, 0.40,
-                #     0.70, 0.90, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75]
-                # Revenue
-
-                # Revenue
-                if total_revenue > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="steelblue", size=12), x=0.08, y=0.99, showarrow=False,
-                                            text='<b>Revenue</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="steelblue", size=12), x=0.08, y=0.96, showarrow=False,
-                                            text=f'<b>${total_revenue:.1f}B</b>'))
-
-                # Gross Profit
-                if gross_profit_value > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.315, y=0.99, showarrow=False,
-                                            text='<b>Gross Profit</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.33, y=0.96, showarrow=False,
-                                            text=f'<b>${gross_profit_value:.1f}B</b>'))
-
-                # Operating Profit
-                if operating_income > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.61, y=1.05, showarrow=False,
-                                            text='<b>Operating Profit</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.61, y=1.02, showarrow=False,
-                                            text=f'<b>${operating_income:.1f}B</b>'))
-
-                # Net Profit
-                if net_income > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.95, y=1.05, showarrow=False,
-                                            text='<b>Net Profit</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.94, y=1, showarrow=False,
-                                            text=f'<b>${net_income:.1f}B</b>'))
-
-                # Tax
-                if tax_provision > 0:
-                    sankey_fig.add_annotation(
-                        dict(font=dict(color="maroon", size=12), x=0.93, y=0.9, showarrow=False, text='<b>Tax</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.85, showarrow=False,
-                                            text=f'<b>${tax_provision:.1f}B</b>'))
-
-                # Other
-                if other > 0:
-                    sankey_fig.add_annotation(
-                        dict(font=dict(color="maroon", size=12), x=0.935, y=0.75, showarrow=False, text='<b>Other</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.70, showarrow=False,
-                                            text=f'<b>${other:.1f}B</b>'))
-
-                # SG&A
-                if sga > 0:
-                    sankey_fig.add_annotation(
-                        dict(font=dict(color="maroon", size=12), x=0.93, y=0.58, showarrow=False, text='<b>SG&A</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.93, y=0.52, showarrow=False,
-                                            text=f'<b>${sga:.1f}B</b>'))
-
-                # Other Operating Expenses
-                if other_operating_expenses > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.95, y=0.40, showarrow=False,
-                                            text='<b>Other<br>Operating<br>Expenses</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.26, showarrow=False,
-                                            text=f'<b>${other_operating_expenses:.1f}B</b>'))
-
-                # Operating Expenses
-                if operating_expense > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.59, y=0.41, showarrow=False,
-                                            text='<b>Operating<br>Expenses</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.59, y=0.34, showarrow=False,
-                                            text=f'<b>${operating_expense:.1f}B</b>'))
-
-                # Cost of Revenues
-                if cost_revenue > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.34, y=0.08, showarrow=False,
-                                            text='<b>Cost of<br>Revenues</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.34, y=0.05, showarrow=False,
-                                            text=f'<b>${cost_revenue:.1f}B</b>'))
-
-                #sankey_fig.show()
+                # Creating a subplot for the bar chart and Sankey diagram
                 fig = make_subplots(
                     rows=1, cols=2,
                     column_widths=[0.05, 0.95],
-                    # subplot_titles = ("Market Cap"),
                     specs=[[{"type": "bar"}, {"type": "sankey"}]]
                 )
 
-                fig.update_xaxes(showticklabels=False, tickvals=[], row=1, col=1)
-
+                # Add bar chart data
                 for trace in bar_fig.data:
                     fig.add_trace(trace, row=1, col=1)
 
+                # Add Sankey diagram data
                 for trace in sankey_fig.data:
                     fig.add_trace(trace, row=1, col=2)
-                    # Add annotations from sankey_fig to fig
-
 
                 fig.update_layout(
                     title_text="Market Cap and Financial Summary",
-                    paper_bgcolor='#F8F8FF'
+                    paper_bgcolor='#F8F8FF',
+                    sliders=[{
+                        'active': 0,
+                        'currentvalue': {'prefix': 'Year: '},
+                        'pad': {'b': 10},
+                        'len': 0.9,
+                        'x': 0.1,
+                        'y': -0.1,
+                        'steps': [{
+                            'label': str(year),
+                            'method': 'update',
+                            'args': [{'visible': [True] + [False] * (len(sankey_fig.data) - 1)}]
+                            # Adjust this for multiple years
+                        } for year in range(2021, 2024)]  # Example years; adjust as needed
+                    }]
                 )
 
-                fig.update_yaxes(
-                    scaleanchor=None,
-                    row=1, col=2
-                )
+                fig.update_yaxes(scaleanchor=None, row=1, col=2)
 
-                # positioning for Sankey graph
+                # Positioning for Sankey graph
                 fig.update_traces(
                     selector=dict(type='sankey'),
                     domain=dict(x=[0.00, 1.00], y=[0.01, 0.5])
                 )
                 fig['layout']['xaxis'].update(domain=[0.0, .06])  # X domain for the bar chart ###
                 fig['layout']['yaxis'].update(domain=[0.22, 1])  # Y domain for the bar chart ###
-                #fig.show()
+
+                # Show figure
+                fig.show()
 
                 return fig, {'display': 'block'}  # Show the Sankey diagram
         else:
