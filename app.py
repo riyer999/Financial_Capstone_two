@@ -67,14 +67,14 @@ def create_treemap():
     fig = px.treemap(treemap_df,
                      path=['Industry', 'Company'],
                      values='MarketCap',
-                     title='Market Capitalization Treemap for S&P 500 Industries and Companies',
                      color='MarketCap',
                      color_continuous_scale='Blues')
 
     return fig
 
 # Load financial data for a given company and year
-def load_data(ticker, year='2023'):
+
+def load_data(ticker, years=['2020', '2021', '2022', '2023']):
     with open('allData.pkl', 'rb') as file:
         allData = pickle.load(file)
 
@@ -113,32 +113,55 @@ def load_data(ticker, year='2023'):
     ]
 
     variable_names = {}
-    for key in keys:
-        variable_name = key.replace(" ", "_")
-        # Try to extract the value, return 0 if key doesn't exist
-        try:
-            variable_names[variable_name] = abs(income_statement.loc[key, year].item())
-        except KeyError:
-            variable_names[variable_name] = 0
+    # Loop through each year and each key
+    for year in years:
+        for key in keys:
+            variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
+            try:
+                variable_names[variable_name] = abs(income_statement.loc[key, year].item())
+            except KeyError:
+                variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
     return variable_names  # Return the dictionary with variable names and values
 
+
+
+# Define the layout of the Dash application
 # Define the layout of the Dash application
 app.layout = html.Div([
     html.H1("S&P 500 Market Capitalization Treemap"),  # Title for the page
-    html.Div(id='treemap-area', children=[
-        dcc.Graph(id='treemap', figure=create_treemap()),  # Treemap component
-        dcc.Graph(id='company-graphic', style={'display': 'none', 'height': '500px'})  # Initially hidden
-    ])
+    dcc.Graph(id='treemap', figure=create_treemap()),  # Treemap component
+    dcc.Dropdown(
+        id='year-dropdown',  # ID for the dropdown
+        options=[
+            {'label': '2020', 'value': '2020'},
+            {'label': '2021', 'value': '2021'},
+            {'label': '2022', 'value': '2022'},
+            {'label': '2023', 'value': '2023'}
+        ],
+        value='2023',  # Default value
+        style={'display': 'none'}  # Initially hidden
+    ),
+    dcc.Graph(id='company-graphic', style={'display': 'none', 'height': '500px'})  # Initially hidden
 ])
+
+
 
 # Callback to update the graphic based on treemap click
 @app.callback(
-    [Output('company-graphic', 'figure'), Output('company-graphic', 'style')],
-    [Input('treemap', 'clickData')]
+    [Output('company-graphic', 'figure'),
+     Output('company-graphic', 'style'),
+     Output('year-dropdown', 'style')],  # Output for the dropdown style
+    [Input('treemap', 'clickData'),
+     Input('year-dropdown', 'value')]  # Include year selection
 )
-def update_graphic(clickData):
+def update_graphic(clickData, selected_year):
+
+    if clickData is None:
+        return {}, {'display': 'none'}, {'display': 'none'}
+
     if clickData is not None:
+
         company_name = clickData['points'][0]['label']
 
         # Normalize the company name for matching
@@ -151,34 +174,28 @@ def update_graphic(clickData):
             ticker = matched_tickers.values[0]
 
             # Load financial data for the selected company
-            financial_metrics = load_data(ticker)
-
+            financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
+            print(financial_metrics.keys())
             if financial_metrics:
-                # Extract financial metrics
-                # total_revenue = financial_metrics.get('Total_Revenue', 0) / 1e9
-                # gross_profit_value = financial_metrics.get('Gross_Profit', 0) / 1e9
-                # cost_revenue = financial_metrics.get('Cost_Of_Revenue', 0) / 1e9
-                # operating_income = financial_metrics.get('Operating_Income', 0) / 1e9
-                # operating_expense = financial_metrics.get('Operating_Expense', 0) / 1e9
-                # net_income = financial_metrics.get('Net_Income', 0) / 1e9
 
-                total_revenue = financial_metrics['Total_Revenue'] / 1000000000
-                gross_profit_value = financial_metrics['Gross_Profit'] / 1000000000
-                cost_revenue = financial_metrics['Cost_Of_Revenue'] / 1000000000
-                operating_income = financial_metrics['Operating_Income'] / 1000000000
-                operating_expense = financial_metrics['Operating_Expense'] / 1000000000
-                tax_provision = financial_metrics['Tax_Provision'] / 1000000000
-                sga = financial_metrics['Selling_General_And_Administration'] / 1000000000
-                other = financial_metrics['Other_Income_Expense'] / 1000000000
-                net_income = financial_metrics['Net_Income'] / 1000000000
-                ga = financial_metrics['General_And_Administrative_Expense'] / 1000000000
-                other_operating_expenses = financial_metrics['Other_Operating_Expenses'] / 1000000000
+                # Extract the financial metrics you need
+                total_revenue = financial_metrics[f'Total_Revenue_{selected_year}'] / 1e9
+                gross_profit_value = financial_metrics[f'Gross_Profit_{selected_year}'] / 1e9
+                cost_revenue = financial_metrics[f'Cost_Of_Revenue_{selected_year}'] / 1e9
+                operating_income = financial_metrics[f'Operating_Income_{selected_year}'] / 1e9
+                operating_expense = financial_metrics[f'Operating_Expense_{selected_year}'] / 1e9
+                tax_provision = financial_metrics[f'Tax_Provision_{selected_year}'] / 1e9
+                sga = financial_metrics[f'Selling_General_And_Administration_{selected_year}'] / 1e9
+                other = financial_metrics[f'Other_Income_Expense_{selected_year}'] / 1e9
+                net_income = financial_metrics[f'Net_Income_{selected_year}'] / 1e9
+                ga = financial_metrics[f'General_And_Administrative_Expense_{selected_year}'] / 1e9
+                other_operating_expenses = financial_metrics[f'Other_Operating_Expenses_{selected_year}'] / 1e9
                 ###################################################
 
                 # initialize market cap bar
                 bar_fig = go.Figure()
 
-                # plot the market cap
+                # Plot the market cap
                 categories = ['Market Cap']
                 values = [get_market_cap(ticker)]
 
@@ -195,6 +212,7 @@ def update_graphic(clickData):
                     barmode='group',
                     paper_bgcolor='#F8F8FF'
                 )
+
                 color_link = ['#000000', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',
                               '#008941', '#006FA6', '#A30059', '#FFDBE5', '#7A4900',
                               '#0000A6', '#63FFAC', '#B79762', '#004D43', '#8FB0FF',
@@ -240,7 +258,6 @@ def update_graphic(clickData):
                 # Data
                 source = [0, 0, 1, 1, 3, 3, 3, 4, 4]
                 target = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-                # gross profit, cost of revenues,
                 value = [gross_profit_value, cost_revenue, operating_income, operating_expense, net_income,
                          tax_provision, other, sga, other_operating_expenses]
 
@@ -248,6 +265,7 @@ def update_graphic(clickData):
                 node = dict(label=label, pad=35, thickness=20)
                 data = go.Sankey(link=link, node=node)
 
+                # Coordinates for nodes
                 x = [0.1, 0.35, 0.35, 0.6,
                      0.6, 0.85, 0.85, 0.85, 0.85, 0.85]
                 y = [0.40, 0.25, 0.70, 0.1,
@@ -256,8 +274,7 @@ def update_graphic(clickData):
                 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]
 
                 sankey_fig = go.Figure(data=[go.Sankey(
-
-                    textfont=dict(color="rgba(0,0,0,0)", size=1),
+                    textfont=dict(color="black", size=10),
                     node=dict(
                         pad=35,
                         line=dict(color="white", width=1),
@@ -273,128 +290,48 @@ def update_graphic(clickData):
 
                 sankey_fig.update_layout(
                     hovermode='x',
-                    title=f"<span style='font-size:36px;color:steelblue;'><b>{company_name} FY23 Income Statement</b></span>",
+                    title="<span style='font-size:36px;color:steelblue;'><b>KO FY23 Income Statement</b></span>",
                     font=dict(size=10, color='white'),
                     paper_bgcolor='#F8F8FF'
                 )
 
                 sankey_fig.update_traces(node_color=color_for_nodes,
-                                  link_color=color_for_links)
+                                         link_color=color_for_links)
 
-                # x = [   0.1, 0.35, 0.35,  0.6, 0.6, 0.6,
-                #      0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
-                # y = [  0.40, 0.25, 0.70, 0.1, 0.40,
-                #     0.70, 0.90, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75]
-                # Revenue
-
-                # Revenue
-                if total_revenue > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="steelblue", size=12), x=0.08, y=0.99, showarrow=False,
-                                            text='<b>Revenue</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="steelblue", size=12), x=0.08, y=0.96, showarrow=False,
-                                            text=f'<b>${total_revenue:.1f}B</b>'))
-
-                # Gross Profit
-                if gross_profit_value > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.315, y=0.99, showarrow=False,
-                                            text='<b>Gross Profit</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.33, y=0.96, showarrow=False,
-                                            text=f'<b>${gross_profit_value:.1f}B</b>'))
-
-                # Operating Profit
-                if operating_income > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.61, y=1.05, showarrow=False,
-                                            text='<b>Operating Profit</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.61, y=1.02, showarrow=False,
-                                            text=f'<b>${operating_income:.1f}B</b>'))
-
-                # Net Profit
-                if net_income > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.95, y=1.05, showarrow=False,
-                                            text='<b>Net Profit</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="green", size=12), x=0.94, y=1, showarrow=False,
-                                            text=f'<b>${net_income:.1f}B</b>'))
-
-                # Tax
-                if tax_provision > 0:
-                    sankey_fig.add_annotation(
-                        dict(font=dict(color="maroon", size=12), x=0.93, y=0.9, showarrow=False, text='<b>Tax</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.85, showarrow=False,
-                                            text=f'<b>${tax_provision:.1f}B</b>'))
-
-                # Other
-                if other > 0:
-                    sankey_fig.add_annotation(
-                        dict(font=dict(color="maroon", size=12), x=0.935, y=0.75, showarrow=False, text='<b>Other</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.70, showarrow=False,
-                                            text=f'<b>${other:.1f}B</b>'))
-
-                # SG&A
-                if sga > 0:
-                    sankey_fig.add_annotation(
-                        dict(font=dict(color="maroon", size=12), x=0.93, y=0.58, showarrow=False, text='<b>SG&A</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.93, y=0.52, showarrow=False,
-                                            text=f'<b>${sga:.1f}B</b>'))
-
-                # Other Operating Expenses
-                if other_operating_expenses > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.95, y=0.40, showarrow=False,
-                                            text='<b>Other<br>Operating<br>Expenses</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.935, y=0.26, showarrow=False,
-                                            text=f'<b>${other_operating_expenses:.1f}B</b>'))
-
-                # Operating Expenses
-                if operating_expense > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.59, y=0.41, showarrow=False,
-                                            text='<b>Operating<br>Expenses</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.59, y=0.34, showarrow=False,
-                                            text=f'<b>${operating_expense:.1f}B</b>'))
-
-                # Cost of Revenues
-                if cost_revenue > 0:
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.34, y=0.08, showarrow=False,
-                                            text='<b>Cost of<br>Revenues</b>'))
-                    sankey_fig.add_annotation(dict(font=dict(color="maroon", size=12), x=0.34, y=0.05, showarrow=False,
-                                            text=f'<b>${cost_revenue:.1f}B</b>'))
-
-                #sankey_fig.show()
+                # Creating a subplot for the bar chart and Sankey diagram
                 fig = make_subplots(
                     rows=1, cols=2,
                     column_widths=[0.05, 0.95],
-                    # subplot_titles = ("Market Cap"),
                     specs=[[{"type": "bar"}, {"type": "sankey"}]]
                 )
 
-                fig.update_xaxes(showticklabels=False, tickvals=[], row=1, col=1)
-
+                # Add bar chart data
                 for trace in bar_fig.data:
                     fig.add_trace(trace, row=1, col=1)
 
+                # Add Sankey diagram data
                 for trace in sankey_fig.data:
                     fig.add_trace(trace, row=1, col=2)
-                    # Add annotations from sankey_fig to fig
-
 
                 fig.update_layout(
                     title_text="Market Cap and Financial Summary",
                     paper_bgcolor='#F8F8FF'
                 )
 
-                fig.update_yaxes(
-                    scaleanchor=None,
-                    row=1, col=2
-                )
+                fig.update_yaxes(scaleanchor=None, row=1, col=2)
 
-                # positioning for Sankey graph
+                # Positioning for Sankey graph
                 fig.update_traces(
                     selector=dict(type='sankey'),
                     domain=dict(x=[0.00, 1.00], y=[0.01, 0.5])
                 )
                 fig['layout']['xaxis'].update(domain=[0.0, .06])  # X domain for the bar chart ###
                 fig['layout']['yaxis'].update(domain=[0.22, 1])  # Y domain for the bar chart ###
-                fig.show()
 
-                return sankey_fig, {'display': 'block'}  # Show the Sankey diagram
+                # Show figure
+
+
+                return fig, {'display': 'block'}, {'display': 'block'}  # Show the Sankey diagram
         else:
             return go.Figure(), {'display': 'none'}  # Return empty figure if no company is found
     else:
