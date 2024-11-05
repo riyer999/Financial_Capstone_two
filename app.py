@@ -7,7 +7,6 @@ from plotly.subplots import make_subplots
 import plotly.express as px
 import pickle
 
-
 # Initialize the Dash application
 app = Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
@@ -64,11 +63,21 @@ treemap_df = pd.merge(cached_data, industry_market_caps, on='Industry')
 
 # Create the treemap plot using Plotly Express
 def create_treemap():
-    fig = px.treemap(treemap_df,
-                     path=['Industry', 'Company'],
-                     values='MarketCap',
-                     color='MarketCap',
-                     color_continuous_scale='Blues')
+    fig = px.treemap(
+        treemap_df,
+        path=[px.Constant("S&P 500"), 'Industry', 'Company'],
+        values='MarketCap',
+        color='MarketCap',
+        color_continuous_scale='Blues'
+    )
+    
+    # Customize hover information
+    fig.update_traces(
+        hovertemplate=(
+            '<b>Company:</b> %{label}<br>' +
+            '<b>Market Cap:</b> $%{value:,.2f}<extra></extra>'
+        )
+    )
 
     return fig
 
@@ -136,7 +145,7 @@ app.layout = html.Div([
         options=[
             {'label': '2020', 'value': '2020'},
             {'label': '2021', 'value': '2021'},
-            {'label': '2022', 'value': '2022'},
+           {'label': '2022', 'value': '2022'},
             {'label': '2023', 'value': '2023'}
         ],
         value='2023',  # Default value
@@ -144,7 +153,7 @@ app.layout = html.Div([
     ),
     dcc.Graph(id='company-graphic', style={'display': 'none', 'height': '500px'})  # Initially hidden
 ])
-
+ 
 
 
 # Callback to update the graphic based on treemap click
