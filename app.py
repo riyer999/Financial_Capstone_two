@@ -129,7 +129,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
 # Define the layout of the Dash application
 # Define the layout of the Dash application
 app.layout = html.Div([
-    html.H1("S&P 500 Market Capitalization Treemap"),  # Title for the page
+    html.H1("S&P 500 Market Capitalization Treemap", style={'textAlign': 'center'}),  # Centered title
     dcc.Graph(id='treemap', figure=create_treemap()),  # Treemap component
     dcc.Dropdown(
         id='year-dropdown',  # ID for the dropdown
