@@ -5,67 +5,8 @@ import yfinance as yf
 import pandas as pd
 
 
-import plotly.graph_objects as go
-import pandas as pd
-
-# Example data
-data = {
-    'Category': [''],  # Only one category (company)
-    'Net Profit': [13.9],
-    'Market Cap': [210.2],
-    'Revenue': [55.2],        # Market Cap (in Billion)
-                    # Net Profit (in Billion)
-}
-
-df = pd.DataFrame(data)
-
-# Create a stacked bar chart with a hidden second segment
-bar_fig = go.Figure(data=[
-
-    go.Bar(
-        name='Net Profit', 
-        x=df['Category'], 
-        y=df['Net Profit'], 
-        marker_color='green',  # White to make it invisible
-        text=['Net Profit: 13.9'],  # This will not be visible due to the white color
-        textposition='inside',
-        textfont=dict(color='white')  # Making the text white as well, so it's invisible
-    ),
-    # Market Cap (Visible)
-    go.Bar(
-        name='Market Cap', 
-        x=df['Category'], 
-        y=df['Revenue'], 
-        marker_color='steelblue',  # Color for Market Cap
-        text=['Revenue: 69.1'],  # Show value for Market Cap
-        textposition='inside',  # Text inside the bar
-        textfont=dict(color='white')  # Text color white
-    ),
-    go.Bar(
-        name='Market Cap', 
-        x=df['Category'], 
-        y=df['Market Cap'], 
-        marker_color='steelblue',  # Color for Market Cap
-        text=['Market Cap: 293.2'],  # Show value for Market Cap
-        textposition='inside',  # Text inside the bar
-        textfont=dict(color='white')  # Text color white
-    ),
-    
-    # Net Profit (Hidden but still part of the stack)
-    
-])
-
-# Update layout for stacking and appearance
-bar_fig.update_layout(
-    barmode='stack',  # Stack bars
-    title='Market Cap Proportionality',  # Title
-    xaxis_title='',  # X-axis title
-    yaxis_title='Amount (in Billions)',  # Y-axis title
-    showlegend=False  # Hide the legend (since you don't need to see Net Profit)
-)
 
 
-#initialize market cap bar
 
 
 color_link = ['#000000', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',
@@ -116,15 +57,17 @@ color_for_links =['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed', 
 # Data 
 source = [0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 4, 4]
 target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
 value = [37.9, 31.2, 17.1, 20.8, 11.8, 19.3, 13.9, 2.3, 0.9, 10.3, 6.9, 3.6 ]
+
 
 link = dict(source=source, target=target, value=value, color=color_link)
 node = dict(label = label, pad=35, thickness=20)
 data = go.Sankey(link=link, node=node)
 
-x = [   0.1, 0.35, 0.35,  0.6, 0.6, 0.6,
+x = [   .015, 0.35, 0.35,  0.6, 0.6, 0.6,
       0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
-y = [  0.40, 0.25, 0.70, 0.1, 0.40, 
+y = [  0.4, 0.25, 0.70, 0.1, 0.40, 
      0.70, 0.90, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75]
 x = [.001 if v==0 else .999 if v==1 else v for v in x]
 y = [.001 if v==0 else .999 if v==1 else v for v in y]
@@ -159,10 +102,6 @@ sankey_fig.update_traces(node_color = color_for_nodes,
 
 
 
-#x = [   0.1, 0.35, 0.35,  0.6, 0.6, 0.6,
-#      0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
-#y = [  0.40, 0.25, 0.70, 0.1, 0.40, 
-#     0.70, 0.90, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75]
 # Revenue
 sankey_fig.add_annotation(dict(font=dict(color="steelblue",size=12), x=0.08, y=0.99, showarrow=False, text='<b>Revenue</b>'))
 sankey_fig.add_annotation(dict(font=dict(color="steelblue",size=12), x=0.08, y=0.96, showarrow=False, text='<b>$69.1B</b>'))
@@ -217,16 +156,21 @@ sankey_fig.add_annotation(dict(font=dict(color="maroon",size=12), x=0.68, y=0.25
 sankey_fig.add_annotation(dict(font=dict(color="maroon",size=12), x=0.68, y=0.10, showarrow=False, text='<b>Others</b>'))
 sankey_fig.add_annotation(dict(font=dict(color="maroon",size=12), x=0.68, y=0.05, showarrow=False, text='<b>$19.3B</b>'))
 
+
+#initialize market cap bar
+
+scatterFig = px.scatter(x=[0,1,2,3], y=[0,0,0,0])
+
 fig = make_subplots(
     rows=1, cols=2,
     column_widths=[0.05, 0.95],
     #subplot_titles = ("Market Cap"),
-    specs = [[{"type": "bar"}, {"type": "sankey"}]]
+    specs = [[{"type": "scatter"}, {"type": "sankey"}]]
 )
 
 fig.update_xaxes(showticklabels=False, tickvals=[], row=1, col=1)
 
-for trace in bar_fig.data:
+for trace in scatterFig.data:
     fig.add_trace(trace, row=1, col=1)
 
 for trace in sankey_fig.data:
@@ -236,9 +180,42 @@ fig.update_layout(
     title_text="Market Cap and Financial Summary",
     paper_bgcolor='#F8F8FF',
     yaxis = dict(
-        range=[0,293.2]
-    )
+        range=[0,293.2],
+        showgrid = True,
+        dtick=20
+    ),
+    xaxis=dict(
+        showgrid=False
+    ),
+    updatemenus=[{
+        'buttons': [
+            {
+                'label': '2021',
+                'method': 'relayout',
+                'args': ['yaxis.range', [0, 270]]  # Setting y-axis range from 0 to 100
+            },
+            {
+                'label': '2022',
+                'method': 'relayout',
+                'args': ['yaxis.range', [0, 305]]  # Setting y-axis range from 0 to 150
+            },
+            {
+                'label': '2023',
+                'method': 'relayout',
+                'args': ['yaxis.range', [0, 293.2]]  # Setting y-axis range from 0 to 293.2
+            }
+        ],
+        'direction': 'down',  # The direction of the dropdown (down or up)
+        'pad': {'r': 10, 't': 10},  # Padding around the dropdown
+        'showactive': True,  # Keep the selected option active
+        'x': 0.9,  # Position of the dropdown on the x-axis (left)
+        'xanchor': 'left',  # Anchors the dropdown to the left
+        'y': 1.05,  # Position of the dropdown on the y-axis (above the plot)
+        'yanchor': 'bottom'  # Anchors the dropdown to the bottom
+    }]
+
 )
+
 
 fig.update_yaxes(
     scaleanchor=None,
@@ -248,9 +225,9 @@ fig.update_yaxes(
 #positioning for Sankey graph
 fig.update_traces(
     selector=dict(type='sankey'),
-    domain=dict(x=[0.1, 1.00], y=[0.01,0.5])
+    domain=dict(x=[0.045, 1], y=[0.1,.8])
 )
-fig['layout']['xaxis'].update(domain=[0.0, .1])  # X domain for the bar chart ###
-fig['layout']['yaxis'].update(domain=[0.22, 1])    # Y domain for the bar chart ###
+fig['layout']['xaxis'].update(domain=[0.0, 1])  # X domain for the bar chart ###
+fig['layout']['yaxis'].update(domain=[0, 1])    # Y domain for the bar chart ###
 
 fig.show()
