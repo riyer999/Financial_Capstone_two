@@ -2,6 +2,7 @@ import yfinance as yf
 import pandas as pd
 import os
 from dash import Dash, dcc, html, Input, Output
+import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
@@ -10,6 +11,8 @@ import pickle
 # Initialize the Dash application
 app = Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
+
+
 
 # File path for the cache
 cache_file = 'market_cap_cache.csv'
@@ -136,7 +139,9 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
 
 
 # Define the layout of the Dash application
-# Define the layout of the Dash application
+app.layout = dbc.Container(html.P("My awesome dashboard will be here."),
+                           fluid=True)
+
 app.layout = html.Div([
     html.H1("S&P 500 Market Capitalization Treemap"),  # Title for the page
     dcc.Graph(id='treemap', figure=create_treemap()),  # Treemap component
