@@ -1,14 +1,17 @@
-body {
-    background-color: #708090;
+html, body {
+    background-color: #010103;  
+    min-height: 100vh;           
+    margin: 0;                   
+    padding: 0;                  
+    font-family: "Poppins";
 }
 
+
 .dashboard-container {
-    width: 1400px;
-    height: 800px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 50px;
-    margin-bottom: 50px;
+    width: 100%;                 
+    height: auto;                
+    margin: 50px auto;
+    padding: 20px;
     background-color: #010103;
     border: 1px solid #cccccc;
     border-radius: 4px;
@@ -17,14 +20,14 @@ body {
 h1 {
     font-family: "Poppins"; 
     color: #ffffff; 
-    font-size: 35px;
+    font-size: 2; 
     margin: 15px;
 }
 
 p {
     font-family: "Poppins";
     color: #ffffff;
-    font-size: 16px;
+    font-size: 1.2;
     margin: 15px;
     text-align: justify;
 }
@@ -45,23 +48,16 @@ p {
     border-radius: 3px;
 }
 
-.btn.btn-outline-light {
-    border: 1px solid transparent;
-}
-
-.btn.btn-outline-light:hover {
-    color: #010103;
-    background-color: color-mix(in srgb, var(--bs-light), #010103 7%);
-}
-
 #search-input {
-    width: 200px;
+    width: 100%;
     height: 38px;
     font-family: "Poppins";
-    font-size: 14px;
+    font-size: 1.5;
     padding: 0 10px;
     margin-left: 10px;
     border: 1px solid #cccccc;
     border-radius: 4px;
 }
-.modebar { display: none !important; }
+.modebar {
+    display: none !important;
+}

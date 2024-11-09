@@ -2,17 +2,15 @@ import yfinance as yf
 import pandas as pd
 import os
 from dash import Dash, dcc, html, Input, Output
-import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
 import pickle
 
+
 # Initialize the Dash application
 app = Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
-
-
 
 # File path for the cache
 cache_file = 'market_cap_cache.csv'
@@ -66,21 +64,11 @@ treemap_df = pd.merge(cached_data, industry_market_caps, on='Industry')
 
 # Create the treemap plot using Plotly Express
 def create_treemap():
-    fig = px.treemap(
-        treemap_df,
-        path=[px.Constant("S&P 500"), 'Industry', 'Company'],
-        values='MarketCap',
-        color='MarketCap',
-        color_continuous_scale='Blues'
-    )
-    
-    # Customize hover information
-    fig.update_traces(
-        hovertemplate=(
-            '<b>Company:</b> %{label}<br>' +
-            '<b>Market Cap:</b> $%{value:,.2f}<extra></extra>'
-        )
-    )
+    fig = px.treemap(treemap_df,
+                     path=['Industry', 'Company'],
+                     values='MarketCap',
+                     color='MarketCap',
+                     color_continuous_scale='Blues')
 
     return fig
 
@@ -139,18 +127,16 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
 
 
 # Define the layout of the Dash application
-app.layout = dbc.Container(html.P("My awesome dashboard will be here."),
-                           fluid=True)
-
+# Define the layout of the Dash application
 app.layout = html.Div([
-    html.H1("S&P 500 Market Capitalization Treemap", style={'textAlign': 'center'}),  # Centered title
+    html.H1("S&P 500 Market Capitalization Treemap"),  # Title for the page
     dcc.Graph(id='treemap', figure=create_treemap()),  # Treemap component
     dcc.Dropdown(
         id='year-dropdown',  # ID for the dropdown
         options=[
             {'label': '2020', 'value': '2020'},
             {'label': '2021', 'value': '2021'},
-           {'label': '2022', 'value': '2022'},
+            {'label': '2022', 'value': '2022'},
             {'label': '2023', 'value': '2023'}
         ],
         value='2023',  # Default value
@@ -158,7 +144,7 @@ app.layout = html.Div([
     ),
     dcc.Graph(id='company-graphic', style={'display': 'none', 'height': '500px'})  # Initially hidden
 ])
- 
+
 
 
 # Callback to update the graphic based on treemap click
