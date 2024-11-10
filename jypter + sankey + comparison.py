@@ -2,78 +2,14 @@ import yfinance as yf
 import pandas as pd
 import os
 from dash import Dash, dcc, html, Input, Output
+import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
 import pickle
 
-
-# Initialize the Dash application
-app = Dash(__name__, suppress_callback_exceptions=True)
-server = app.server
-
-# File path for the cache
 cache_file = 'market_cap_cache.csv'
-
-# Function to get market capitalization from Yahoo Finance
-def get_market_cap(ticker_symbol):
-    stock = yf.Ticker(ticker_symbol)
-    market_cap = stock.info.get('marketCap', None)
-    return market_cap
-
-# Check if cache file exists
-if os.path.exists(cache_file):
-    # Load cached data if it exists
-    cached_data = pd.read_csv(cache_file)
-    print("Loaded market cap data from cache.")
-else:
-    # Read the S&P 500 data from the CSV file
-    sp500_df = pd.read_csv('sp500_companies_industries.csv')
-
-    # Initialize a list for storing market cap data
-    treemap_data = []
-
-    # Fetch the market cap and industries
-    for index, row in sp500_df.iterrows():
-        ticker = row['Ticker']
-        company_name = row['Company']
-        industry = row['Industry']
-        market_cap = get_market_cap(ticker)
-
-        if market_cap is not None:
-            treemap_data.append({
-                'Ticker': ticker,
-                'Company': company_name,
-                'Industry': industry,
-                'MarketCap': market_cap
-            })
-
-    # Convert the data into a DataFrame
-    cached_data = pd.DataFrame(treemap_data)
-
-    # Save the data to CSV to use as cache
-    cached_data.to_csv(cache_file, index=False)
-    print("Market cap data fetched and cached.")
-
-# Calculate total market cap per industry
-industry_market_caps = cached_data.groupby('Industry')['MarketCap'].sum().reset_index()
-industry_market_caps.columns = ['Industry', 'TotalMarketCap']
-
-# Merge total market cap back into the main DataFrame
-treemap_df = pd.merge(cached_data, industry_market_caps, on='Industry')
-
-# Create the treemap plot using Plotly Express
-def create_treemap():
-    fig = px.treemap(treemap_df,
-                     path=['Industry', 'Company'],
-                     values='MarketCap',
-                     color='MarketCap',
-                     color_continuous_scale='Blues')
-
-    return fig
-
 # Load financial data for a given company and year
-
 def load_data(ticker, years=['2020', '2021', '2022', '2023']):
     with open('allData.pkl', 'rb') as file:
         allData = pickle.load(file)
@@ -123,53 +59,216 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
                 variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
     return variable_names  # Return the dictionary with variable names and values
+# Function to get market capitalization from Yahoo Finance
+def get_market_cap(ticker_symbol):
+    stock = yf.Ticker(ticker_symbol)
+    market_cap = stock.info.get('marketCap', None)
+    return market_cap
 
 
+# Check if cache file exists
+if os.path.exists(cache_file):
+    # Load cached data if it exists
+    cached_data = pd.read_csv(cache_file)
+    print("Loaded market cap data from cache.")
+else:
+    # Read the S&P 500 data from the CSV file
+    sp500_df = pd.read_csv('sp500_companies_industries.csv')
 
-# Define the layout of the Dash application
-# Define the layout of the Dash application
-app.layout = html.Div([
-    html.H1("S&P 500 Market Capitalization Treemap"),  # Title for the page
-    dcc.Graph(id='treemap', figure=create_treemap()),  # Treemap component
-    dcc.Dropdown(
-        id='year-dropdown',  # ID for the dropdown
-        options=[
-            {'label': '2020', 'value': '2020'},
-            {'label': '2021', 'value': '2021'},
-            {'label': '2022', 'value': '2022'},
-            {'label': '2023', 'value': '2023'}
-        ],
-        value='2023',  # Default value
-        style={'display': 'none'}  # Initially hidden
-    ),
-    dcc.Graph(id='company-graphic', style={'display': 'none', 'height': '500px'})  # Initially hidden
+    # Initialize a list for storing market cap data
+    treemap_data = []
+
+    # Fetch the market cap and industries
+    for index, row in sp500_df.iterrows():
+        ticker = row['Ticker']
+        company_name = row['Company']
+        industry = row['Industry']
+        market_cap = get_market_cap(ticker)
+
+        if market_cap is not None:
+            treemap_data.append({
+                'Ticker': ticker,
+                'Company': company_name,
+                'Industry': industry,
+                'MarketCap': market_cap
+            })
+
+    # Convert the data into a DataFrame
+    cached_data = pd.DataFrame(treemap_data)
+
+    # Save the data to CSV to use as cache
+    cached_data.to_csv(cache_file, index=False)
+
+# Calculate total market cap per industry
+industry_market_caps = cached_data.groupby('Industry')['MarketCap'].sum().reset_index()
+industry_market_caps.columns = ['Industry', 'TotalMarketCap']
+
+# Merge total market cap back into the main DataFrame
+treemap_df = pd.merge(cached_data, industry_market_caps, on='Industry')
+
+
+# Create the treemap plot using Plotly Express with darker colors
+def create_treemap():
+    fig = px.treemap(
+        treemap_df,
+        path=[px.Constant("S&P 500"), 'Industry', 'Company'],
+        values='MarketCap',
+        color='MarketCap',
+        color_continuous_scale=[(0.0, '#0d0d0d'), (0.5, '#222222'), (1.0, '#444444')]
+    )
+
+    fig.update_traces(
+        hovertemplate=(
+                '<b>Company:</b> %{label}<br>' +
+                '<b>Market Cap:</b> $%{value:,.2f}<extra></extra>'
+        )
+    )
+    fig.update_layout(
+        plot_bgcolor='#010103',
+        paper_bgcolor='#010103',
+        font_color='#e6e6e6',
+        width=1310,
+        height=850,
+        showlegend=False,
+        margin=dict(l=0, r=0, t=0, b=0)
+    )
+    return fig
+
+
+app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
+    {"name": "viewport", "content": "width=device-width, initial-scale=1"}
+])
+
+app.layout = dbc.Container([
+    dcc.Location(id='url', refresh=False),
+    html.Div([
+        html.Div([
+            html.H1([
+                "FinSight",
+                html.Br(),
+                html.Span("Visualization of Company Financials")
+            ], style={'color': '#e6e6e6'}),
+            html.P("Search or Click on a Company to view their financials!", style={'color': '#cccccc'})
+        ], style={"vertical-align": "top", "height": 210}),
+
+        html.Div([
+            dbc.RadioItems(
+                className='btn-group',
+                inputClassName='btn-check',
+                labelClassName="btn btn-outline-light",
+                labelCheckedClassName="btn btn-light",
+                options=[{"label": "Home", "value": 1}, {"label": "Compare", "value": 2}],
+                value=1,
+                id='compare-button'
+
+            ),
+            dcc.Input(
+                id="search-input",
+                type="text",
+                placeholder="Search Company...",
+                style={'width': 200, 'backgroundColor': '#333333', 'color': '#e6e6e6'}
+            )
+        ], style={'display': 'flex', 'align-items': 'center', 'margin-left': 15, "height": 220})
+    ], style={'width': 340, 'margin-left': 35, 'margin-top': 35}),
+
+    html.Div(id='page-content', style={'width': 890, 'margin': 40})
+], fluid=True, style={'display': 'flex', 'backgroundColor': '#010103'})
+
+main_page_layout = html.Div([
+    dcc.Graph(id='treemap-graph', figure=create_treemap())
+])
+
+# Compare page layout
+compare_page_layout = html.Div([
+    html.H1("Compare Companies"),
+    html.P("Here you can compare different companies."),
+    # Add more content for comparing companies, like dropdowns, charts, etc.
 ])
 
 
 
-# Callback to update the graphic based on treemap click
+
+# Update the page URL based on clicks on the treemap
+# Callback to update the URL based on the click event in the treemap
 @app.callback(
-    [Output('company-graphic', 'figure'),
-     Output('company-graphic', 'style'),
-     Output('year-dropdown', 'style')],  # Output for the dropdown style
-    [Input('treemap', 'clickData'),
-     Input('year-dropdown', 'value')]  # Include year selection
+    Output('url', 'pathname'),
+    Input('treemap-graph', 'clickData')
 )
-def update_graphic(clickData, selected_year):
+def update_url(click_data):
+    if click_data:
+        item_name = click_data['points'][0]['label']
+        print(f"Item clicked: {item_name}")  # Debugging
+        if item_name in treemap_df['Company'].values:
+            # If a company is clicked, navigate to its detail page
+            return f'/item/{item_name}'
+    return '/'  # Return to the main page if no company is clicked
 
-    if clickData is None:
-        return {}, {'display': 'none'}, {'display': 'none'}
 
-    if clickData is not None:
+@app.callback(Output('page-content', 'children'), Input('url', 'pathname'), Input('compare-button', 'value'))
+def display_page(pathname, compare_value):
+    if compare_value == 2:
+        return dcc.Location(id='url', pathname='/compare', refresh=True)
+    if pathname == '/' or pathname == '':
+        return main_page_layout
+    elif pathname.startswith('/item/'):
+        item_name = pathname.split('/')[-1]
+        print(f"Displaying details for {item_name}")  # Debugging
+        return html.Div([
+            html.H1(f"Details for {item_name.capitalize()}"),
+            #html.P("This is a blank page where you can add more information about this item."),
 
-        company_name = clickData['points'][0]['label']
-        print(company_name)
-        # Normalize the company name for matching
+            html.Br(),
+            dcc.Dropdown(
+                id='year-dropdown',
+                options=[{'label': year, 'value': year} for year in ['2020', '2021', '2022', '2023']],
+                value='2020',  # default value
+                placeholder='Select a year',  # Adds a placeholder
+            ),
+
+            # Graph for company details
+            dcc.Graph(
+                id='company-graphic',
+                style={
+                    'height': '500px',  # Adjust height as desired
+                    'width': '100%'  # Adjust width as desired; '100%' makes it responsive
+                }
+            ),
+
+            # Button to return to the main page
+            html.A(
+                html.Button("Back to Treemap", id="back-button"),
+                href="/"  # URL to navigate back to the root page
+            )
+        ])
+    elif pathname == '/compare':
+        return compare_page_layout
+    return main_page_layout
+
+
+
+
+@app.callback(
+Output('company-graphic', 'figure'),
+    Output('company-graphic', 'style'),
+    [Input('url', 'pathname'),  # Use pathname to get company name from the URL
+     Input('year-dropdown', 'value')]  # Use the selected year for filtering
+)
+def update_company_graphic(pathname, selected_year):
+    # Extract the company name from the pathname (strip "/item/" part)
+    if pathname.startswith('/item/'):
+        company_name = pathname.split('/')[-1]
+        print(f"Displaying details for {company_name}")  # Debugging
+
+        # Normalize company name to match entries in your DataFrame
         company_name_normalized = company_name.strip().lower()
 
+        # Assuming you have a 'Normalized_Company' column for matching in `treemap_df`
         treemap_df['Normalized_Company'] = treemap_df['Company'].str.strip().str.lower()
+
+        # Get the ticker corresponding to the company
         matched_tickers = treemap_df[treemap_df['Normalized_Company'] == company_name_normalized]['Ticker']
-        print(f"matched ticker: {matched_tickers}")
+        print(f"Matched tickers: {matched_tickers}")  # Debugging
+
         if not matched_tickers.empty:
             ticker = matched_tickers.values[0]
             print(f"Selected ticker: {ticker}")  # Debugging
@@ -314,7 +413,7 @@ def update_graphic(clickData, selected_year):
                     fig.add_trace(trace, row=1, col=2)
 
                 fig.update_layout(
-                    title_text="Market Cap and Financial Summary",
+                    title_text="Market Cap and Income Statement Sankey",
                     paper_bgcolor='#F8F8FF'
                 )
 
@@ -330,13 +429,14 @@ def update_graphic(clickData, selected_year):
 
                 # Show figure
 
-
-                return fig, {'display': 'block'}, {'display': 'block'}  # Show the Sankey diagram
+                return fig, {'display': 'block'}#, {'display': 'block'}  # Show the Sankey diagram
         else:
             return go.Figure(), {'display': 'none'}  # Return empty figure if no company is found
     else:
         return go.Figure(), {'display': 'none'}  # Return empty figure if no company clicked
 
-# Run the app
-if __name__ == '__main__':
-    app.run_server(debug=True)
+
+
+
+if __name__ == "__main__":
+    app.run_server(debug=True, port=8050)
