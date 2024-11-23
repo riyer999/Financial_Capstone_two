@@ -2,8 +2,8 @@ import pickle
 import plotly.express as px
 import pandas as pd
 
-company = 'PEP'
-date = '2022'
+company = 'KO'
+date = '2020'
 
 # Function to load the financial data from the pickle file
 def load_data(ticker, year):

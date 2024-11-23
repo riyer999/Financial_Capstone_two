@@ -1,7 +1,7 @@
 import yfinance as yf
 import pandas as pd
 import os
-from dash import Dash, dash, dcc, html, Input, Output
+from dash import Dash, dash, dcc, html, Input, Output, State, no_update
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -9,6 +9,8 @@ import plotly.express as px
 import pickle
 
 cache_file = 'market_cap_cache.csv'
+
+
 # Load financial data for a given company and year
 def load_data(ticker, years=['2020', '2021', '2022', '2023']):
     with open('allData.pkl', 'rb') as file:
@@ -59,6 +61,8 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
                 variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
     return variable_names  # Return the dictionary with variable names and values
+
+
 # Function to get market capitalization from Yahoo Finance
 def get_market_cap(ticker_symbol):
     stock = yf.Ticker(ticker_symbol)
@@ -116,7 +120,6 @@ def create_treemap():
         color='MarketCap',
         color_continuous_scale=[(0.0, '#1B2A49'), (0.5, '#1E6091'), (1.0, '#76C1EC')]
 
-
     )
 
     fig.update_traces(
@@ -137,13 +140,28 @@ def create_treemap():
     return fig
 
 
+autocomplete_options = [
+    {"label": f"{company_name} ({ticker})", "value": ticker} for company_name, ticker in
+    zip(treemap_df['Company'].values, treemap_df['Ticker'].values)
+]
+autocomplete_options1 = [
+    {"label": f"{company_name}", "value": company_name} for company_name, ticker in
+    zip(treemap_df['Company'].values, treemap_df['Ticker'].values)
+]
+
 app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
     {"name": "viewport", "content": "width=device-width, initial-scale=1"}
 ])
 
+server = app.server
+
+
+# App layout
 app.layout = dbc.Container([
     dcc.Location(id='url', refresh=False),
-    html.Div([
+
+    # Sidebar
+    html.Div(id='sidebar', children=[
         html.Div([
             html.H1([
                 "FinSight",
@@ -162,37 +180,54 @@ app.layout = dbc.Container([
                 options=[{"label": "Home", "value": 1}, {"label": "Compare", "value": 2}],
                 value=1,
                 id='compare-button'
-
             ),
-            dcc.Input(
-                id="search-input",
-                type="text",
-                placeholder="Search Company...",
-                style={'width': 200, 'backgroundColor': '#333333', 'color': '#e6e6e6'}
-            )
+            html.Div([
+                dcc.Dropdown(
+                    id="autocomplete-dropdown",
+                    options=autocomplete_options,
+                    placeholder="Start typing...",
+                    style={'width': 200, 'backgroundColor': '#333333', 'color': '#000000'},
+                    searchable=True,
+                    multi=False,
+
+                ),
+            ], style={'display': 'flex', 'flex-direction': 'column', 'align-items': 'flex-start', 'margin-left': 15})
         ], style={'display': 'flex', 'align-items': 'center', 'margin-left': 15, "height": 220})
     ], style={'width': 340, 'margin-left': 35, 'margin-top': 35}),
 
+    # Main content area
     html.Div(id='page-content', style={'width': 890, 'margin': 40})
 ], fluid=True, style={'display': 'flex', 'backgroundColor': '#010103'})
 
+# Define page layouts
 main_page_layout = html.Div([
     dcc.Graph(id='treemap-graph', figure=create_treemap())
 ])
+
+
 @app.callback(
     [Output("graph1", "figure"), Output("graph1-container", "style")],
-    [Input("search-bar-1", "value"), Input("year-dropdown-1", "value")]
+    [Input("autocomplete-dropdown1", "value"), Input("year-dropdown-1", "value")]
 )
 def update_graph1(company_name, selected_year):
     return generate_graph(company_name, selected_year)
 
 
 @app.callback(
+    Output('autocomplete-dropdown1', 'value'),  # Set the dropdown's value
+    Input('autocomplete-dropdown1', 'value')  # Triggered when the user types or selects
+)
+def persist_value(selected_value):
+    return selected_value  # Return the same value to keep it displayed
+
+
+@app.callback(
     [Output("graph2", "figure"), Output("graph2-container", "style")],
-    [Input("search-bar-2", "value"), Input("year-dropdown-2", "value")]
+    [Input("autocomplete-dropdown2", "value"), Input("year-dropdown-2", "value")]
 )
 def update_graph2(company_name, selected_year):
     return generate_graph(company_name, selected_year)
+
 
 def generate_graph(company_name, selected_year):
     if not company_name or not selected_year:
@@ -370,122 +405,137 @@ def generate_graph(company_name, selected_year):
 
                 return fig, {'display': 'block'}
 
-# compare page layout
+
 compare_page_layout = html.Div([
     html.H1("Compare Companies"),
     html.P("Here you can compare different companies."),
 
-    # Column for Company 1
+    # Wrapper for the two columns
     html.Div([
-        html.Div([
-            html.Label("Company 1 Search"),
-            dcc.Input(id="search-bar-1", type="text", placeholder="Enter Company 1 Name or Ticker"),
-        ], style={'padding': '10px'}),
 
         html.Div([
-            html.Label("Select Year"),
-            dcc.Dropdown(
-                id="year-dropdown-1",
-                options=[{"label": str(year), "value": str(year)} for year in range(2020, 2024)],
-                placeholder="Select Year"
-            ),
-        ], style={'padding': '10px'}),
+            html.Div([
+                html.Label("Company 1 Search"),
+                dcc.Dropdown(
+                    id="autocomplete-dropdown1",
+                    options=autocomplete_options1,
+                    placeholder="Enter Company 1 Name or Ticker",
+                    style={'width': 200, 'backgroundColor': '#333333', 'color': '#000000'},
+                    searchable=True,
+                    multi=False,
+                ),
+            ], style={'padding': '10px'}),
+
+            html.Div([
+                html.Label("Select Year"),
+                dcc.Dropdown(
+                    id="year-dropdown-1",
+                    options=[{"label": str(year), "value": str(year)} for year in range(2020, 2024)],
+                    placeholder="Select Year"
+                ),
+            ], style={'padding': '10px'}),
+
+            html.Div([
+                dcc.Graph(id="graph1", style={'width': '100%', 'height': '70vh'}),  # Increased graph height
+            ], id="graph1-container", style={'padding': '10px', 'display': 'block'}),  # Container Div
+        ], style={'flex': '2', 'padding': '10px', 'border': '1px solid #ccc'}),  # Increased flex for more space
 
         html.Div([
-            dcc.Graph(id="graph1", style={'width': '100%', 'height': '500px'}),
-        ], id="graph1-container", style={'padding': '10px', 'display': 'block'}),  # Container Div
-    ], style={'flex': '4', 'padding': '10px', 'border': '1px solid #ccc'}),  # Increased flex
+            html.Div([
+                html.Label("Company 2 Search"),
+                dcc.Dropdown(
+                    id="autocomplete-dropdown2",
+                    options=autocomplete_options1,
+                    placeholder="Enter Company 2 Name or Ticker",
+                    style={'width': 200, 'backgroundColor': '#333333', 'color': '#932182'},
+                    searchable=True,
+                    multi=False,
+                ),
+            ], style={'padding': '10px'}),
 
-    # Column for Company 2
-    html.Div([
-        html.Div([
-            html.Label("Company 2 Search"),
-            dcc.Input(id="search-bar-2", type="text", placeholder="Enter Company 2 Name or Ticker"),
-        ], style={'padding': '10px'}),
+            html.Div([
+                html.Label("Select Year"),
+                dcc.Dropdown(
+                    id="year-dropdown-2",
+                    options=[{"label": str(year), "value": str(year)} for year in range(2020, 2024)],
+                    placeholder="Select Year"
+                ),
+            ], style={'padding': '10px'}),
 
-        html.Div([
-            html.Label("Select Year"),
-            dcc.Dropdown(
-                id="year-dropdown-2",
-                options=[{"label": str(year), "value": str(year)} for year in range(2020, 2024)],
-                placeholder="Select Year"
-            ),
-        ], style={'padding': '10px'}),
+            html.Div([
+                dcc.Graph(id="graph2", style={'width': '100%', 'height': '70vh'}),  # Increased graph height
+            ], id="graph2-container", style={'padding': '10px', 'display': 'block'}),  # Container Div
+        ], style={'flex': '2', 'padding': '10px', 'border': '1px solid #ccc'}),  # Increased flex for more space
 
-        html.Div([
-            dcc.Graph(id="graph2", style={'width': '100%', 'height': '500px'}),
-        ], id="graph2-container", style={'padding': '10px', 'display': 'block'}),  # Container Div
-    ], style={'flex': '4', 'padding': '10px', 'border': '1px solid #ccc'}),  # Increased flex
-], style={'display': 'flex', 'flexDirection': 'column', 'gap': '20px', 'width': '100%', 'maxWidth': '2000px', 'margin': '0 auto'})
-
-
-
+    ], style={'display': 'flex', 'flexDirection': 'row', 'gap': '40px', 'width': '100%', 'maxWidth': '2000px',
+              'margin': '0 auto'})
+], style={'width': '190%'})
 
 initial_treemap_fig = create_treemap()
 
+
 @app.callback(
     [Output('url', 'pathname'), Output('treemap-graph', 'figure')],
-    [Input('treemap-graph', 'clickData'), Input('search-input', 'value')]
+    [Input('treemap-graph', 'clickData'), Input('autocomplete-dropdown', 'value')],
+    [State('autocomplete-dropdown', 'value')]
 )
-def update_url_and_treemap(click_data, search_value):
+def update_url_and_treemap(click_data, search_value, _):
+    # Handle clickData first (for clicking on the treemap)
     if click_data:
         item_name = click_data['points'][0]['label']
 
         if item_name in treemap_df['Company'].values:
             return f'/item/{item_name}', dash.no_update
         elif item_name in treemap_df['Industry'].values:
-            return initial_treemap_fig
+            return '/', initial_treemap_fig
 
-    elif search_value:
+    # Handle search input when a value is selected or typed in
+    if search_value:
         if search_value in treemap_df['Company'].values:
             return f'/item/{search_value}', dash.no_update
+        elif search_value in treemap_df['Ticker'].values:
+            company_name = treemap_df.loc[treemap_df['Ticker'] == search_value, 'Company'].values[0]
+            return f'/item/{company_name}', dash.no_update
 
+    # Default case (return to the root page with initial figure)
     return '/', initial_treemap_fig
 
 
 @app.callback(
-    Output('page-content', 'children'),
+    [Output('page-content', 'children'),
+     Output('sidebar', 'style')],  # Control sidebar visibility
     [Input('url', 'pathname'), Input('compare-button', 'value')]
 )
 def display_page(pathname, compare_value):
-    if compare_value == 2:
-        return compare_page_layout
-    if pathname == '/' or pathname == '':
-        return main_page_layout
+    if compare_value == 2 or pathname == '/compare':
+        # Compare page layout and hide sidebar
+        return compare_page_layout, {'display': 'none'}
     elif pathname.startswith('/item/'):
-        item_name = pathname.split('/')[-1]
+        # Company details page and hide sidebar
         return html.Div([
-            html.H1(f"Details for {item_name.capitalize()}"),
-
+            html.H1(f"Details for {pathname.split('/')[-1].capitalize()}"),
             html.Br(),
             dcc.Dropdown(
                 id='year-dropdown',
                 options=[{'label': year, 'value': year} for year in ['2020', '2021', '2022', '2023']],
-                value='2020',  # default value
+                value='2020',  # Default value
                 placeholder='Select a year',  # Adds a placeholder
             ),
-
-            # Graph for company details
             dcc.Graph(
                 id='company-graphic',
-                style={
-                    'height': '500px',  # Adjust height as desired
-                    'width': '100%'  # Adjust width as desired; '100%' makes it responsive
-                }
+                style={'height': '500px', 'width': '100%'}
             ),
-
-            # Button to return to the main page
             html.A(
                 html.Button("Back to Treemap", id="back-button"),
                 href="/"  # URL to navigate back to the root page
             )
-        ])
-    elif pathname == '/compare':
-        return compare_page_layout
-    return main_page_layout
+        ]), {'display': 'none'}
+    # Default to main page with sidebar
+    return main_page_layout, {'width': 340, 'margin-left': 35, 'margin-top': 35}
+
 
 @app.callback(
-Output('company-graphic', 'figure'),
+    Output('company-graphic', 'figure'),
     Output('company-graphic', 'style'),
     [Input('url', 'pathname'),  # Use pathname to get company name from the URL
      Input('year-dropdown', 'value')]  # Use the selected year for filtering
@@ -499,7 +549,7 @@ def update_company_graphic(pathname, selected_year):
         # Normalize company name to match entries in your DataFrame
         company_name_normalized = company_name.strip().lower()
 
-        # Assuming you have a 'Normalized_Company' column for matching in `treemap_df`
+        # Assuming you have a 'Normalized_Company' column for matching in treemap_df
         treemap_df['Normalized_Company'] = treemap_df['Company'].str.strip().str.lower()
 
         # Get the ticker corresponding to the company
@@ -665,6 +715,7 @@ def update_company_graphic(pathname, selected_year):
                 fig['layout']['yaxis'].update(domain=[0.22, 1])  # Y domain for the bar chart ###
 
                 return fig, {'display': 'block'}
+
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=8060)
