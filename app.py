@@ -8,6 +8,12 @@ from plotly.subplots import make_subplots
 import plotly.express as px
 import pickle
 
+app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
+    {"name": "viewport", "content": "width=device-width, initial-scale=1"}
+])
+
+server = app.server
+
 cache_file = 'market_cap_cache.csv'
 
 
@@ -208,9 +214,7 @@ autocomplete_options1 = [
     zip(treemap_df['Company'].values, treemap_df['Ticker'].values)
 ]
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
-    {"name": "viewport", "content": "width=device-width, initial-scale=1"}
-])
+
 
 # App layout
 app.layout = dbc.Container([
