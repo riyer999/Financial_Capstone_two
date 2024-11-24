@@ -17,9 +17,10 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
         allData = pickle.load(file)
 
     income_statement = allData[ticker]['income_statement']
+    balance_sheet = allData[ticker]['balance_sheet']
 
     # List of keys to extract from the income statement
-    keys = [
+    income_statement_keys = [
         'Total Unusual Items',
         'Total Unusual Items Excluding Goodwill',
         'Net Interest Income',
@@ -50,13 +51,71 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
         'Operating Revenue'
     ]
 
+    balance_sheet_keys = [
+        'Total Assets',
+        'Current Assets',
+            'Cash Cash Equivalents And Short Term Investments',
+                'Cash And Cash Equivalents',
+                'Other Short Term Investments',
+            'Receivables',
+            'Inventory',
+                'Raw Materials',
+                'Finished Goods',
+                'Other Inventories',
+            'Prepaid Assets',
+            'Other Current Assets',
+        #
+        'Total Non Current Assets',
+            'Net PPE',
+            'Goodwill And Other Intangible Assets',
+                'Goodwill',
+                'Other Intangible Assets',
+            'Investments And Advances',
+                'Long Term Equity Investment',
+                'Other Investments',
+            'Non Current Accounts Receivable',
+            'Non Current Note Receivables',
+            'Non Current Deferred Assets',
+            'Defined Pension Benefit',
+            'Other Non Current Assets',
+        #
+        'Total Liabilities Net Minority Interest',
+            'Current Liabilities',
+                'Payables And Accrued Expenses',
+                'Pensionand Other Post Retirement Benefit Plans ...',
+                'Current Debt And Capital Lease Obligation',
+                'Other Current Liabilities',
+            'Total Non Current Liabilities Net Minority Interest',
+                'Long Term Debt And Capital Lease Obligation',
+                'Non Current Deferred Liabilities',
+                'Other Non Current Liabilities',
+        #
+        'Total Equity Gross Minority Interest',
+        #
+            'Stockholders Equity',
+                'Capital Stock',
+                'Additional Paid in Capital',
+                'Retained Earnings',
+                'Treasury Stock',
+                'Gains Losses Not Affecting Retained Earnings',
+            'Minority Interest',
+    ]
+
     variable_names = {}
-    # Loop through each year and each key
+    # loop through the years and each key for the income statement
     for year in years:
-        for key in keys:
+        for key in income_statement_keys:
             variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
             try:
                 variable_names[variable_name] = abs(income_statement.loc[key, year].item())
+            except KeyError:
+                variable_names[variable_name] = 0  # Return 0 if key doesn't exist
+
+        # loop through the years and each key for the balance sheet
+        for key in balance_sheet_keys:
+            variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
+            try:
+                variable_names[variable_name] = abs(balance_sheet.loc[key, year].item())
             except KeyError:
                 variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
@@ -153,9 +212,6 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
     {"name": "viewport", "content": "width=device-width, initial-scale=1"}
 ])
 
-server = app.server
-
-
 # App layout
 app.layout = dbc.Container([
     dcc.Location(id='url', refresh=False),
@@ -185,7 +241,7 @@ app.layout = dbc.Container([
                 dcc.Dropdown(
                     id="autocomplete-dropdown",
                     options=autocomplete_options,
-                    placeholder="Start typing...",
+                    placeholder="Search Company...",
                     style={'width': 200, 'backgroundColor': '#333333', 'color': '#000000'},
                     searchable=True,
                     multi=False,
@@ -204,22 +260,27 @@ main_page_layout = html.Div([
     dcc.Graph(id='treemap-graph', figure=create_treemap())
 ])
 
-
-@app.callback(
-    [Output("graph1", "figure"), Output("graph1-container", "style")],
-    [Input("autocomplete-dropdown1", "value"), Input("year-dropdown-1", "value")]
-)
-def update_graph1(company_name, selected_year):
-    return generate_graph(company_name, selected_year)
-
-
 @app.callback(
     Output('autocomplete-dropdown1', 'value'),  # Set the dropdown's value
     Input('autocomplete-dropdown1', 'value')  # Triggered when the user types or selects
 )
 def persist_value(selected_value):
     return selected_value  # Return the same value to keep it displayed
+@app.callback(
+    [Output("graph1", "figure"), Output("graph1-container", "style"),
+     ],
+    [Input("autocomplete-dropdown1", "value"), Input("year-dropdown-1", "value")]
+)
 
+def update_graph1(company_name, selected_year):
+    return generate_graph(company_name, selected_year)
+
+@app.callback(
+    Output("balance-graph-1", "figure"),
+    [Input("autocomplete-dropdown1", "value"), Input("year-dropdown-1", "value")]
+)
+def graph3(company_name, selected_year):
+    return generate_balance_graph(company_name, selected_year)
 
 @app.callback(
     [Output("graph2", "figure"), Output("graph2-container", "style")],
@@ -227,6 +288,14 @@ def persist_value(selected_value):
 )
 def update_graph2(company_name, selected_year):
     return generate_graph(company_name, selected_year)
+
+@app.callback(
+    Output("balance-graph-2", "figure"),
+    [Input("autocomplete-dropdown2", "value"), Input("year-dropdown-2", "value")]
+)
+def graph4(company_name, selected_year):
+    return generate_balance_graph(company_name, selected_year)
+
 
 
 def generate_graph(company_name, selected_year):
@@ -405,29 +474,164 @@ def generate_graph(company_name, selected_year):
 
                 return fig, {'display': 'block'}
 
+def generate_balance_graph(company_name, selected_year):
+    if not company_name or not selected_year:
+        return {}
+
+    print(f"Fetching balance sheet for: {company_name} for year {selected_year}")
+
+    company_name_normalized = company_name.strip().lower()
+    treemap_df['Normalized_Company'] = treemap_df['Company'].str.strip().str.lower()
+
+    matched_tickers = treemap_df[treemap_df['Normalized_Company'] == company_name_normalized]['Ticker']
+    print(f"Matched tickers: {matched_tickers}")
+
+    if not matched_tickers.empty:
+        ticker = matched_tickers.values[0]
+        print(f"Selected ticker: {ticker}")
+        financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
+
+        # Replace this with actual financial metrics from `financial_data`
+        data = {
+            "category": [],
+            "subcategory": [],
+            "type": [],
+            "item": [],
+            "value": []
+        }
+
+        # Define hierarchy for treemap
+        hierarchy = {
+            "Total Assets": {
+                "Current Assets": {
+                    "Cash Cash Equivalents And Short Term Investments": [
+                        "Cash And Cash Equivalents",
+                        "Other Short Term Investments"
+                    ],
+                    "Receivables": [
+                        "Receivables",
+                    ],
+                    "Inventory": [
+                        "Raw Materials",
+                        "Finished Goods",
+                        "Other Inventories",
+                    ],
+                    "Prepaid Assets": [
+                        "Prepaid Assets",
+                    ],
+                    "Other Current Assets": [
+                        "Other Current Assets",
+                    ]
+                },
+                "Total Non-current Assets": {
+                    "Net PPE": [
+                        "Net PPE",
+                    ],
+                    "Goodwill And Other Intangible Assets": [
+                        "Goodwill",
+                        "Other Intangible Assets",
+                    ],
+                    "Investments And Advances": [
+                        "Long Term Equity Investment",
+                        "Other Investments"
+                    ],
+                    "Non Current Accounts Receivable": [
+                        "Non Current Accounts Receivable",
+                    ],
+                    "Non Current Note Receivables": [
+                        "Non Current Note Receivables",
+                    ],
+                    "Non Current Deferred Assets": [
+                        "Non Current Deferred Assets",
+                    ],
+                    "Defined Pension Benefit": [
+                        "Defined Pension Benefit",
+                    ],
+                    "Other Non Current Assets": [
+                        "Other Non Current Assets",
+                    ]
+                }
+            },
+            "Total Liabilities and Equity": {
+                "Total Liabilities Net Minority Interest": {
+                    "Current Liabilities": [
+                        "Payables And Accrued Expenses",
+                        "Pensionand Other Post Retirement Benefit Plans ...",
+                        "Current Debt And Capital Lease Obligation",
+                        "Other Current Liabilities"
+                    ],
+                    "Total Non Current Liabilities Net Minority Interest": [
+                        "Long Term Debt And Capital Lease Obligation",
+                        "Non Current Deferred Liabilities",
+                        "Other Non Current Liabilities"
+                    ]
+                },
+                "Total Equity Gross Minority Interest": {
+                    "Stockholders Equity": [
+                        "Stockholders Equity"
+                    ],
+                    "Minority Interest": [
+                        "Minority Interest"
+                    ]
+                }
+            }
+        }
+
+        # Dynamically build data for the treemap
+
+        for category, subcategories in hierarchy.items():
+            for subcategory, types in subcategories.items():
+                for type_, items in types.items():
+                    for item in items:
+                        # Retrieve the corresponding financial metric for the selected year
+                        metric_key = f"{item.replace(' ', '_')}_{selected_year}"
+                        value = financial_metrics.get(metric_key,
+                                                      0) / 1e9  # Convert to billions for visualization
+
+                        # Append data for treemap
+                        data["category"].append(category)
+                        data["subcategory"].append(subcategory)
+                        data["type"].append(type_)
+                        data["item"].append(item)
+                        data["value"].append(value)
+
+        # Create the treemap
+        balance_fig = px.treemap(
+            data,
+            path=['category', 'subcategory', 'type', 'item'],  # Include all hierarchy levels
+            values='value'
+        )
+        balance_fig.update_layout(margin=dict(t=50, l=50, r=50, b=50), font=dict(size=23))
+        balance_fig.update_traces(maxdepth=2)  # Adjust maxdepth for the full hierarchy
+
+        # Show the plot
+        #balance_fig.show()
+        return balance_fig
+
 
 compare_page_layout = html.Div([
     html.H1("Compare Companies"),
-    html.P("Here you can compare different companies."),
+    #html.P("Here you can compare different companies."),
 
     # Wrapper for the two columns
     html.Div([
 
         html.Div([
             html.Div([
-                html.Label("Company 1 Search"),
+                html.Label("Company 1 Search", style={'color': 'white'}),
                 dcc.Dropdown(
                     id="autocomplete-dropdown1",
                     options=autocomplete_options1,
-                    placeholder="Enter Company 1 Name or Ticker",
-                    style={'width': 200, 'backgroundColor': '#333333', 'color': '#000000'},
+                    placeholder="Company 1 Search...",
+                    style={'width': 200, 'backgroundColor': 'white', 'color': 'black'},
                     searchable=True,
                     multi=False,
                 ),
+
             ], style={'padding': '10px'}),
 
             html.Div([
-                html.Label("Select Year"),
+                html.Label("Select Year", style={'color': 'white'}),
                 dcc.Dropdown(
                     id="year-dropdown-1",
                     options=[{"label": str(year), "value": str(year)} for year in range(2020, 2024)],
@@ -435,26 +639,31 @@ compare_page_layout = html.Div([
                 ),
             ], style={'padding': '10px'}),
 
+            # Graph 1
             html.Div([
                 dcc.Graph(id="graph1", style={'width': '100%', 'height': '70vh'}),  # Increased graph height
-            ], id="graph1-container", style={'padding': '10px', 'display': 'block'}),  # Container Div
-        ], style={'flex': '2', 'padding': '10px', 'border': '1px solid #ccc'}),  # Increased flex for more space
+            ], id="graph1-container", style={'padding': '10px', 'display': 'block'}),
+
+            # New Graph: balance-graph-1
+            dcc.Graph(id="balance-graph-1", style={'width': '100%', 'height': '70vh'}),  # New graph 1
+
+        ], style={'flex': '2', 'padding': '10px', 'border': '1px solid #ccc'}),
 
         html.Div([
             html.Div([
-                html.Label("Company 2 Search"),
+                html.Label("Company 2 Search", style={'color': 'white'}),
                 dcc.Dropdown(
                     id="autocomplete-dropdown2",
                     options=autocomplete_options1,
-                    placeholder="Enter Company 2 Name or Ticker",
-                    style={'width': 200, 'backgroundColor': '#333333', 'color': '#932182'},
+                    placeholder="Company 2 Search...",
+                    style={'width': 200, 'backgroundColor': 'white', 'color': 'black'},
                     searchable=True,
                     multi=False,
                 ),
             ], style={'padding': '10px'}),
 
             html.Div([
-                html.Label("Select Year"),
+                html.Label("Select Year", style={'color': 'white'}),
                 dcc.Dropdown(
                     id="year-dropdown-2",
                     options=[{"label": str(year), "value": str(year)} for year in range(2020, 2024)],
@@ -462,14 +671,36 @@ compare_page_layout = html.Div([
                 ),
             ], style={'padding': '10px'}),
 
+            # Graph 2
             html.Div([
                 dcc.Graph(id="graph2", style={'width': '100%', 'height': '70vh'}),  # Increased graph height
-            ], id="graph2-container", style={'padding': '10px', 'display': 'block'}),  # Container Div
-        ], style={'flex': '2', 'padding': '10px', 'border': '1px solid #ccc'}),  # Increased flex for more space
+            ], id="graph2-container", style={'padding': '10px', 'display': 'block'}),
 
-    ], style={'display': 'flex', 'flexDirection': 'row', 'gap': '40px', 'width': '100%', 'maxWidth': '2000px',
-              'margin': '0 auto'})
+            # New Graph: balance-graph-2
+            dcc.Graph(id="balance-graph-2", style={'width': '100%', 'height': '70vh'}),  # New graph 2
+
+        ], style={'flex': '2', 'padding': '10px', 'border': '1px solid #ccc'}),
+        html.A(
+            html.Button("Back to Treemap", id="back-button", style={
+                'position': 'fixed',  # Position the button relative to the viewport
+                'bottom': '10px',  # Distance from the bottom edge
+                'left': '10px',  # Distance from the left edge
+                'zIndex': '1000',  # Ensure it appears above other elements
+                'backgroundColor': '#007bff',  # Optional: button color
+                'color': 'white',  # Optional: text color
+                'padding': '10px 20px',  # Optional: button padding
+                'border': 'none',  # Optional: button border
+                'borderRadius': '5px',  # Optional: rounded corners
+                'cursor': 'pointer'  # Optional: pointer cursor on hover
+            }),
+            href="/"  # URL to navigate back to the root page
+        )
+
+    ], style={'display': 'flex', 'flexDirection': 'row', 'gap': '40px', 'width': '100%', 'maxWidth': '2000px', 'margin': '0 auto'})
 ], style={'width': '190%'})
+
+
+
 
 initial_treemap_fig = create_treemap()
 
@@ -526,7 +757,18 @@ def display_page(pathname, compare_value):
                 style={'height': '500px', 'width': '100%'}
             ),
             html.A(
-                html.Button("Back to Treemap", id="back-button"),
+                html.Button("Back to Treemap", id="back-button", style={
+                    'position': 'fixed',  # Position the button relative to the viewport
+                    'bottom': '10px',  # Distance from the bottom edge
+                    'left': '10px',  # Distance from the left edge
+                    'zIndex': '1000',  # Ensure it appears above other elements
+                    'backgroundColor': '#007bff',  # Optional: button color
+                    'color': 'white',  # Optional: text color
+                    'padding': '10px 20px',  # Optional: button padding
+                    'border': 'none',  # Optional: button border
+                    'borderRadius': '5px',  # Optional: rounded corners
+                    'cursor': 'pointer'  # Optional: pointer cursor on hover
+                }),
                 href="/"  # URL to navigate back to the root page
             )
         ]), {'display': 'none'}
