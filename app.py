@@ -596,13 +596,30 @@ def generate_balance_graph(company_name, selected_year):
                         data["value"].append(value)
 
         # Create the treemap
+        if not isinstance(data, pd.DataFrame):
+            data = pd.DataFrame(data)
+
+        # Add a custom hover label that appends "Billion" to the value
+        data['custom_label'] = data['item'] + ': $' + data['value'].astype(str) + ' Billion'
+
+        # Create the treemap
         balance_fig = px.treemap(
             data,
-            path=['category', 'subcategory', 'type', 'item'],  # Include all hierarchy levels
+            path=['category', 'subcategory', 'type', 'item'],
             values='value'
         )
-        balance_fig.update_layout(margin=dict(t=50, l=50, r=50, b=50), font=dict(size=23))
-        balance_fig.update_traces(maxdepth=2)  # Adjust maxdepth for the full hierarchy
+
+        # Update hover labels using hovertemplate
+        balance_fig.update_traces(
+            maxdepth=2,
+            hovertemplate='<b>%{label}</b><br>%{value} Billion<extra></extra>',
+            textfont=dict(size=23)  # Adjust the font size
+        )
+
+        # Update layout
+        balance_fig.update_layout(
+            margin=dict(t=50, l=50, r=50, b=50)
+        )
 
         # Show the plot
         #balance_fig.show()
@@ -1093,13 +1110,30 @@ def update_company_graphic_balance(pathname, selected_year):
                             data["value"].append(value)
 
             # Create the treemap
+            if not isinstance(data, pd.DataFrame):
+                data = pd.DataFrame(data)
+
+            # Add a custom hover label that appends "Billion" to the value
+            data['custom_label'] = data['item'] + ': $' + data['value'].astype(str) + ' Billion'
+
+            # Create the treemap
             balance_fig = px.treemap(
                 data,
-                path=['category', 'subcategory', 'type', 'item'],  # Include all hierarchy levels
+                path=['category', 'subcategory', 'type', 'item'],
                 values='value'
             )
-            balance_fig.update_layout(margin=dict(t=50, l=50, r=50, b=50), font=dict(size=23))
-            balance_fig.update_traces(maxdepth=2)  # Adjust maxdepth for the full hierarchy
+
+            # Update hover labels using hovertemplate
+            balance_fig.update_traces(
+                maxdepth=2,
+                hovertemplate='<b>%{label}</b><br>%{value} Billion<extra></extra>',
+                textfont=dict(size=23)  # Adjust the font size
+            )
+
+            # Update layout
+            balance_fig.update_layout(
+                margin=dict(t=50, l=50, r=50, b=50)
+            )
 
             # Show the plot
             # balance_fig.show()
