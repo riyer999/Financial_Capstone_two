@@ -756,6 +756,10 @@ def display_page(pathname, compare_value):
                 id='company-graphic',
                 style={'height': '500px', 'width': '100%'}
             ),
+            dcc.Graph(
+                id='company-balance-graphic',  # Added balance graphic
+                style={'height': '500px', 'width': '100%'}
+            ),
             html.A(
                 html.Button("Back to Treemap", id="back-button", style={
                     'position': 'fixed',  # Position the button relative to the viewport
@@ -958,6 +962,148 @@ def update_company_graphic(pathname, selected_year):
 
                 return fig, {'display': 'block'}
 
+@app.callback(
+    Output('company-balance-graphic', 'figure'),
+    [Input('url', 'pathname'),  # Use pathname to get company name from the URL
+     Input('year-dropdown', 'value')]  # Use the selected year for filtering
+)
+def update_company_graphic_balance(pathname, selected_year):
+    # Extract the company name from the pathname (strip "/item/" part)
+    if pathname.startswith('/item/'):
+        company_name = pathname.split('/')[-1]
+        print(f"Displaying details for {company_name}")  # Debugging
+
+        # Normalize company name to match entries in your DataFrame
+        company_name_normalized = company_name.strip().lower()
+
+        # Assuming you have a 'Normalized_Company' column for matching in treemap_df
+        treemap_df['Normalized_Company'] = treemap_df['Company'].str.strip().str.lower()
+
+        # Get the ticker corresponding to the company
+        matched_tickers = treemap_df[treemap_df['Normalized_Company'] == company_name_normalized]['Ticker']
+        print(f"Matched tickers: {matched_tickers}")  # Debugging
+
+        if not matched_tickers.empty:
+            ticker = matched_tickers.values[0]
+            print(f"Selected ticker: {ticker}")
+            financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
+
+            # Replace this with actual financial metrics from `financial_data`
+            data = {
+                "category": [],
+                "subcategory": [],
+                "type": [],
+                "item": [],
+                "value": []
+            }
+
+            # Define hierarchy for treemap
+            hierarchy = {
+                "Total Assets": {
+                    "Current Assets": {
+                        "Cash Cash Equivalents And Short Term Investments": [
+                            "Cash And Cash Equivalents",
+                            "Other Short Term Investments"
+                        ],
+                        "Receivables": [
+                            "Receivables",
+                        ],
+                        "Inventory": [
+                            "Raw Materials",
+                            "Finished Goods",
+                            "Other Inventories",
+                        ],
+                        "Prepaid Assets": [
+                            "Prepaid Assets",
+                        ],
+                        "Other Current Assets": [
+                            "Other Current Assets",
+                        ]
+                    },
+                    "Total Non-current Assets": {
+                        "Net PPE": [
+                            "Net PPE",
+                        ],
+                        "Goodwill And Other Intangible Assets": [
+                            "Goodwill",
+                            "Other Intangible Assets",
+                        ],
+                        "Investments And Advances": [
+                            "Long Term Equity Investment",
+                            "Other Investments"
+                        ],
+                        "Non Current Accounts Receivable": [
+                            "Non Current Accounts Receivable",
+                        ],
+                        "Non Current Note Receivables": [
+                            "Non Current Note Receivables",
+                        ],
+                        "Non Current Deferred Assets": [
+                            "Non Current Deferred Assets",
+                        ],
+                        "Defined Pension Benefit": [
+                            "Defined Pension Benefit",
+                        ],
+                        "Other Non Current Assets": [
+                            "Other Non Current Assets",
+                        ]
+                    }
+                },
+                "Total Liabilities and Equity": {
+                    "Total Liabilities Net Minority Interest": {
+                        "Current Liabilities": [
+                            "Payables And Accrued Expenses",
+                            "Pensionand Other Post Retirement Benefit Plans ...",
+                            "Current Debt And Capital Lease Obligation",
+                            "Other Current Liabilities"
+                        ],
+                        "Total Non Current Liabilities Net Minority Interest": [
+                            "Long Term Debt And Capital Lease Obligation",
+                            "Non Current Deferred Liabilities",
+                            "Other Non Current Liabilities"
+                        ]
+                    },
+                    "Total Equity Gross Minority Interest": {
+                        "Stockholders Equity": [
+                            "Stockholders Equity"
+                        ],
+                        "Minority Interest": [
+                            "Minority Interest"
+                        ]
+                    }
+                }
+            }
+
+            # Dynamically build data for the treemap
+
+            for category, subcategories in hierarchy.items():
+                for subcategory, types in subcategories.items():
+                    for type_, items in types.items():
+                        for item in items:
+                            # Retrieve the corresponding financial metric for the selected year
+                            metric_key = f"{item.replace(' ', '_')}_{selected_year}"
+                            value = financial_metrics.get(metric_key,
+                                                          0) / 1e9  # Convert to billions for visualization
+
+                            # Append data for treemap
+                            data["category"].append(category)
+                            data["subcategory"].append(subcategory)
+                            data["type"].append(type_)
+                            data["item"].append(item)
+                            data["value"].append(value)
+
+            # Create the treemap
+            balance_fig = px.treemap(
+                data,
+                path=['category', 'subcategory', 'type', 'item'],  # Include all hierarchy levels
+                values='value'
+            )
+            balance_fig.update_layout(margin=dict(t=50, l=50, r=50, b=50), font=dict(size=23))
+            balance_fig.update_traces(maxdepth=2)  # Adjust maxdepth for the full hierarchy
+
+            # Show the plot
+            # balance_fig.show()
+            return balance_fig
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=8060)
