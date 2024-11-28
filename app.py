@@ -462,7 +462,7 @@ def generate_graph(company_name, selected_year):
                     fig.add_trace(trace, row=1, col=2)
 
                 fig.update_layout(
-                    title_text="Market Cap and Income Statement Sankey",
+                    title_text="Market Cap and Income Statement",
                     paper_bgcolor='#F8F8FF'
                 )
 
@@ -506,6 +506,7 @@ def generate_balance_graph(company_name, selected_year):
 
         # Define hierarchy for treemap
         hierarchy = {
+            "Balance Sheet": {
             "Total Assets": {
                 "Current Assets": {
                     "Cash Cash Equivalents And Short Term Investments": [
@@ -579,7 +580,7 @@ def generate_balance_graph(company_name, selected_year):
                     ]
                 }
             }
-        }
+        }}
 
         # Dynamically build data for the treemap
 
@@ -967,7 +968,7 @@ def update_company_graphic(pathname, selected_year):
                     fig.add_trace(trace, row=1, col=2)
 
                 fig.update_layout(
-                    title_text="Market Cap and Income Statement Sankey",
+                    title_text="Market Cap and Income Statement",
                     paper_bgcolor='#F8F8FF'
                 )
 
@@ -1020,6 +1021,7 @@ def update_company_graphic_balance(pathname, selected_year):
 
             # Define hierarchy for treemap
             hierarchy = {
+                "Balance Sheet":{
                 "Total Assets": {
                     "Current Assets": {
                         "Cash Cash Equivalents And Short Term Investments": [
@@ -1093,6 +1095,7 @@ def update_company_graphic_balance(pathname, selected_year):
                         ]
                     }
                 }
+            }
             }
 
             # Dynamically build data for the treemap

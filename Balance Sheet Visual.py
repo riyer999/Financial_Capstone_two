@@ -90,6 +90,7 @@ data = {
 
 # Define hierarchy for treemap, adding a "type" level for demonstration
 hierarchy = {
+    "Root" :{
     "Total Assets": {
         "Current Assets": {
             "Cash Cash Equivalents And Short Term Investments": [
@@ -165,6 +166,7 @@ hierarchy = {
             ]
         }
     }
+}
 }
 
 # Build data dynamically based on the hierarchy
