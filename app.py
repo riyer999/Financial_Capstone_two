@@ -497,6 +497,7 @@ def generate_balance_graph(company_name, selected_year):
 
         # Replace this with actual financial metrics from `financial_data`
         data = {
+            "root": [],
             "category": [],
             "subcategory": [],
             "type": [],
@@ -504,9 +505,8 @@ def generate_balance_graph(company_name, selected_year):
             "value": []
         }
 
-        # Define hierarchy for treemap
+        # Define hierarchy for treemap with a root node
         hierarchy = {
-            "Balance Sheet": {
             "Total Assets": {
                 "Current Assets": {
                     "Cash Cash Equivalents And Short Term Investments": [
@@ -580,20 +580,19 @@ def generate_balance_graph(company_name, selected_year):
                     ]
                 }
             }
-        }}
+        }
 
         # Dynamically build data for the treemap
-
         for category, subcategories in hierarchy.items():
             for subcategory, types in subcategories.items():
                 for type_, items in types.items():
                     for item in items:
                         # Retrieve the corresponding financial metric for the selected year
                         metric_key = f"{item.replace(' ', '_')}_{selected_year}"
-                        value = financial_metrics.get(metric_key,
-                                                      0) / 1e9  # Convert to billions for visualization
+                        value = financial_metrics.get(metric_key, 0) / 1e9  # Convert to billions for visualization
 
                         # Append data for treemap
+                        data["root"].append("Balance Sheet")  # Add root node
                         data["category"].append(category)
                         data["subcategory"].append(subcategory)
                         data["type"].append(type_)
@@ -610,13 +609,13 @@ def generate_balance_graph(company_name, selected_year):
         # Create the treemap
         balance_fig = px.treemap(
             data,
-            path=['category', 'subcategory', 'type', 'item'],
+            path=['root', 'category', 'subcategory', 'type', 'item'],  # Include root node in path
             values='value'
         )
 
         # Update hover labels using hovertemplate
         balance_fig.update_traces(
-            maxdepth=3,
+            maxdepth=3,  # Adjust depth to include all levels
             hovertemplate='<b>%{label}</b><br>%{value} Billion<extra></extra>',
             textfont=dict(size=23)  # Adjust the font size
         )
@@ -1012,6 +1011,7 @@ def update_company_graphic_balance(pathname, selected_year):
 
             # Replace this with actual financial metrics from `financial_data`
             data = {
+                "root": [],
                 "category": [],
                 "subcategory": [],
                 "type": [],
@@ -1019,9 +1019,8 @@ def update_company_graphic_balance(pathname, selected_year):
                 "value": []
             }
 
-            # Define hierarchy for treemap
+            # Define hierarchy for treemap with a root node
             hierarchy = {
-                "Balance Sheet":{
                 "Total Assets": {
                     "Current Assets": {
                         "Cash Cash Equivalents And Short Term Investments": [
@@ -1096,20 +1095,18 @@ def update_company_graphic_balance(pathname, selected_year):
                     }
                 }
             }
-            }
 
             # Dynamically build data for the treemap
-
             for category, subcategories in hierarchy.items():
                 for subcategory, types in subcategories.items():
                     for type_, items in types.items():
                         for item in items:
                             # Retrieve the corresponding financial metric for the selected year
                             metric_key = f"{item.replace(' ', '_')}_{selected_year}"
-                            value = financial_metrics.get(metric_key,
-                                                          0) / 1e9  # Convert to billions for visualization
+                            value = financial_metrics.get(metric_key, 0) / 1e9  # Convert to billions for visualization
 
                             # Append data for treemap
+                            data["root"].append("Balance Sheet")  # Add root node
                             data["category"].append(category)
                             data["subcategory"].append(subcategory)
                             data["type"].append(type_)
@@ -1126,13 +1123,13 @@ def update_company_graphic_balance(pathname, selected_year):
             # Create the treemap
             balance_fig = px.treemap(
                 data,
-                path=['category', 'subcategory', 'type', 'item'],
+                path=['root', 'category', 'subcategory', 'type', 'item'],  # Include root node in path
                 values='value'
             )
 
             # Update hover labels using hovertemplate
             balance_fig.update_traces(
-                maxdepth=3,
+                maxdepth=3,  # Adjust depth to include all levels
                 hovertemplate='<b>%{label}</b><br>%{value} Billion<extra></extra>',
                 textfont=dict(size=23)  # Adjust the font size
             )
