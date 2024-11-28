@@ -616,7 +616,7 @@ def generate_balance_graph(company_name, selected_year):
 
         # Update hover labels using hovertemplate
         balance_fig.update_traces(
-            maxdepth=2,
+            maxdepth=3,
             hovertemplate='<b>%{label}</b><br>%{value} Billion<extra></extra>',
             textfont=dict(size=23)  # Adjust the font size
         )
@@ -1132,7 +1132,7 @@ def update_company_graphic_balance(pathname, selected_year):
 
             # Update hover labels using hovertemplate
             balance_fig.update_traces(
-                maxdepth=2,
+                maxdepth=3,
                 hovertemplate='<b>%{label}</b><br>%{value} Billion<extra></extra>',
                 textfont=dict(size=23)  # Adjust the font size
             )
