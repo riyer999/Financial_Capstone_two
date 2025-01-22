@@ -420,6 +420,29 @@ def generate_graph(company_name, selected_year):
                      0.45, 0.0, 0.15, 0.30, 0.45, 0.60]
                 x = [.001 if v == 0 else .999 if v == 1 else v for v in x]
                 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]
+                # Calculate percentage
+                gross_margin_percentage = (gross_profit_value / total_revenue) * 100
+                sga_margin_percentage = (sga / gross_profit_value) * 100
+                net_profit_margin = (net_income / total_revenue) * 100
+                cost_revenue_margin = (cost_revenue / total_revenue) * 100
+                #total_revenue_margin = (total_revenue / get_market_cap(ticker)) * 100
+                operating_profit_margin = (operating_income / total_revenue) * 100
+                operating_expenses_margin = (operating_expense / total_revenue) * 100
+                tax_provision_margin = (tax_provision / total_revenue) * 100
+
+                # Add custom hover labels for nodes
+                custom_hover_data = [
+                    f"Total Revenue: {total_revenue:.2f}B",  # Revenue node (no custom data needed)
+                    f"Gross Profit: {gross_profit_value:.2f}B<br>Percentage of Revenue: {gross_margin_percentage:.2f}%",
+                    f"Cost of Revenue: {cost_revenue:.2f}B<br>Percentage of Revenue: {cost_revenue_margin:.2f}%",  # Cost of Revenues
+                    f"Operating Profit: {operating_income:.2f}B<br>Percentage of Revenue: {operating_profit_margin:.2f}%",  # Operating Profit
+                    f"Operating Expenses: {operating_expense:.2f}B<br>Percentage of Revenue: {operating_expenses_margin:.2f}%",  # Operating Expenses
+                    f"Net Profit: {net_income:.2f}B<br>Percentage of Revenue: {net_profit_margin:.2f}%",  # Net Profit
+                    f"Tax: {tax_provision:.2f}B<br>Percentage of Revenue: {tax_provision_margin:.2f}%",  # Tax
+                    "",  # Other
+                    f"SG&A: {sga:.2f}B<br>Percentage of Gross Profit: {sga_margin_percentage:.2f}%",
+                    ""  # Other Expenses
+                ]
 
                 sankey_fig = go.Figure(data=[go.Sankey(
                     textfont=dict(color="black", size=10),
@@ -428,13 +451,16 @@ def generate_graph(company_name, selected_year):
                         line=dict(color="white", width=1),
                         label=label,
                         x=x,
-                        y=y
+                        y=y,
+                        customdata=custom_hover_data,  # Add custom hover data
+                        hovertemplate="%{customdata}<extra></extra>"  # Use custom hover labels
                     ),
                     link=dict(
                         source=source,
                         target=target,
                         value=value
-                    ))])
+                    )
+                )])
 
                 sankey_fig.update_layout(
                     hovermode='x',
@@ -558,7 +584,7 @@ def generate_balance_graph(company_name, selected_year):
                 }
             },
             "Total Liabilities and Equity": {
-                "Total Liabilities Net Minority Interest": {
+                "Total Liabilities": {
                     "Current Liabilities": [
                         "Payables And Accrued Expenses",
                         "Pensionand Other Post Retirement Benefit Plans ...",
@@ -571,7 +597,7 @@ def generate_balance_graph(company_name, selected_year):
                         "Other Non Current Liabilities"
                     ]
                 },
-                "Total Equity Gross Minority Interest": {
+                "Total Equity": {
                     "Stockholders Equity": [
                         "Stockholders Equity"
                     ],
@@ -926,6 +952,33 @@ def update_company_graphic(pathname, selected_year):
                 x = [.001 if v == 0 else .999 if v == 1 else v for v in x]
                 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]
 
+                # Calculate percentage
+                gross_margin_percentage = (gross_profit_value / total_revenue) * 100
+                sga_margin_percentage = (sga / gross_profit_value) * 100
+                net_profit_margin = (net_income / total_revenue) * 100
+                cost_revenue_margin = (cost_revenue / total_revenue) * 100
+                # total_revenue_margin = (total_revenue / get_market_cap(ticker)) * 100
+                operating_profit_margin = (operating_income / total_revenue) * 100
+                operating_expenses_margin = (operating_expense / total_revenue) * 100
+                tax_provision_margin = (tax_provision / total_revenue) * 100
+
+                # Add custom hover labels for nodes
+                custom_hover_data = [
+                    f"Total Revenue: {total_revenue:.2f}B",  # Revenue node (no custom data needed)
+                    f"Gross Profit: {gross_profit_value:.2f}B<br>Percentage of Revenue: {gross_margin_percentage:.2f}%",
+                    f"Cost of Revenue: {cost_revenue:.2f}B<br>Percentage of Revenue: {cost_revenue_margin:.2f}%",
+                    # Cost of Revenues
+                    f"Operating Profit: {operating_income:.2f}B<br>Percentage of Revenue: {operating_profit_margin:.2f}%",
+                    # Operating Profit
+                    f"Operating Expenses: {operating_expense:.2f}B<br>Percentage of Revenue: {operating_expenses_margin:.2f}%",
+                    # Operating Expenses
+                    f"Net Profit: {net_income:.2f}B<br>Percentage of Revenue: {net_profit_margin:.2f}%",  # Net Profit
+                    f"Tax: {tax_provision:.2f}B<br>Percentage of Revenue: {tax_provision_margin:.2f}%",  # Tax
+                    "",  # Other
+                    f"SG&A: {sga:.2f}B<br>Percentage of Gross Profit: {sga_margin_percentage:.2f}%",
+                    ""  # Other Expenses
+                ]
+
                 sankey_fig = go.Figure(data=[go.Sankey(
                     textfont=dict(color="black", size=10),
                     node=dict(
@@ -933,13 +986,16 @@ def update_company_graphic(pathname, selected_year):
                         line=dict(color="white", width=1),
                         label=label,
                         x=x,
-                        y=y
+                        y=y,
+                        customdata=custom_hover_data,  # Add custom hover data
+                        hovertemplate="%{customdata}<extra></extra>"  # Use custom hover labels
                     ),
                     link=dict(
                         source=source,
                         target=target,
                         value=value
-                    ))])
+                    )
+                )])
 
                 sankey_fig.update_layout(
                     hovermode='x',
@@ -1072,7 +1128,7 @@ def update_company_graphic_balance(pathname, selected_year):
                     }
                 },
                 "Total Liabilities and Equity": {
-                    "Total Liabilities Net Minority Interest": {
+                    "Total Liabilities": {
                         "Current Liabilities": [
                             "Payables And Accrued Expenses",
                             "Pensionand Other Post Retirement Benefit Plans ...",
@@ -1085,7 +1141,7 @@ def update_company_graphic_balance(pathname, selected_year):
                             "Other Non Current Liabilities"
                         ]
                     },
-                    "Total Equity Gross Minority Interest": {
+                    "Equity": {
                         "Stockholders Equity": [
                             "Stockholders Equity"
                         ],

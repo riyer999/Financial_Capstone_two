@@ -9,7 +9,7 @@ with open('0_tickerList.txt', 'r') as file: #don't really need this if you end u
 
 #Master dictionary is called allData
 allData = {} #initializing an empty dictionary to store all financial data for each company
-tickerList = ['AAPL','KO', 'TSM', 'AMZN', 'PEP', 'JPM'] #the list of companies that you fetching financial information for
+tickerList = ['KO', 'PEP', 'TAP', 'MNST', 'KDP'] #the list of companies that you fetching financial information for
 for ticker in tickerList:
     try:
         print(ticker) #print the ticker to track the progress of fetching the information
