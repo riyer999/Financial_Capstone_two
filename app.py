@@ -1,7 +1,7 @@
 import yfinance as yf
 import pandas as pd
 import os
-from dash import Dash, dash, dcc, html, Input, Output, State, no_update
+from dash import Dash, dash, dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -18,12 +18,15 @@ cache_file = 'market_cap_cache.csv'
 
 
 # Load financial data for a given company and year
-def load_data(ticker, years=['2020', '2021', '2022', '2023']):
-    with open('allData.pkl', 'rb') as file:
-        allData = pickle.load(file)
+import yfinance as yf
 
-    income_statement = allData[ticker]['income_statement']
-    balance_sheet = allData[ticker]['balance_sheet']
+def load_data(ticker, years=['2020', '2021', '2022', '2023']):
+    # Fetch the data dynamically using yfinance
+    ystock = yf.Ticker(ticker)
+
+    # Fetch the financial data
+    income_statement = ystock.incomestmt
+    balance_sheet = ystock.balance_sheet
 
     # List of keys to extract from the income statement
     income_statement_keys = [
@@ -60,51 +63,47 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
     balance_sheet_keys = [
         'Total Assets',
         'Current Assets',
-            'Cash Cash Equivalents And Short Term Investments',
-                'Cash And Cash Equivalents',
-                'Other Short Term Investments',
-            'Receivables',
-            'Inventory',
-                'Raw Materials',
-                'Finished Goods',
-                'Other Inventories',
-            'Prepaid Assets',
-            'Other Current Assets',
-        #
+        'Cash Cash Equivalents And Short Term Investments',
+        'Cash And Cash Equivalents',
+        'Other Short Term Investments',
+        'Receivables',
+        'Inventory',
+        'Raw Materials',
+        'Finished Goods',
+        'Other Inventories',
+        'Prepaid Assets',
+        'Other Current Assets',
         'Total Non Current Assets',
-            'Net PPE',
-            'Goodwill And Other Intangible Assets',
-                'Goodwill',
-                'Other Intangible Assets',
-            'Investments And Advances',
-                'Long Term Equity Investment',
-                'Other Investments',
-            'Non Current Accounts Receivable',
-            'Non Current Note Receivables',
-            'Non Current Deferred Assets',
-            'Defined Pension Benefit',
-            'Other Non Current Assets',
-        #
+        'Net PPE',
+        'Goodwill And Other Intangible Assets',
+        'Goodwill',
+        'Other Intangible Assets',
+        'Investments And Advances',
+        'Long Term Equity Investment',
+        'Other Investments',
+        'Non Current Accounts Receivable',
+        'Non Current Note Receivables',
+        'Non Current Deferred Assets',
+        'Defined Pension Benefit',
+        'Other Non Current Assets',
         'Total Liabilities Net Minority Interest',
-            'Current Liabilities',
-                'Payables And Accrued Expenses',
-                'Pensionand Other Post Retirement Benefit Plans ...',
-                'Current Debt And Capital Lease Obligation',
-                'Other Current Liabilities',
-            'Total Non Current Liabilities Net Minority Interest',
-                'Long Term Debt And Capital Lease Obligation',
-                'Non Current Deferred Liabilities',
-                'Other Non Current Liabilities',
-        #
+        'Current Liabilities',
+        'Payables And Accrued Expenses',
+        'Pensionand Other Post Retirement Benefit Plans ...',
+        'Current Debt And Capital Lease Obligation',
+        'Other Current Liabilities',
+        'Total Non Current Liabilities Net Minority Interest',
+        'Long Term Debt And Capital Lease Obligation',
+        'Non Current Deferred Liabilities',
+        'Other Non Current Liabilities',
         'Total Equity Gross Minority Interest',
-        #
-            'Stockholders Equity',
-                'Capital Stock',
-                'Additional Paid in Capital',
-                'Retained Earnings',
-                'Treasury Stock',
-                'Gains Losses Not Affecting Retained Earnings',
-            'Minority Interest',
+        'Stockholders Equity',
+        'Capital Stock',
+        'Additional Paid in Capital',
+        'Retained Earnings',
+        'Treasury Stock',
+        'Gains Losses Not Affecting Retained Earnings',
+        'Minority Interest',
     ]
 
     variable_names = {}
@@ -126,6 +125,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
                 variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
     return variable_names  # Return the dictionary with variable names and values
+
 
 
 # Function to get market capitalization from Yahoo Finance
@@ -305,6 +305,7 @@ def graph4(company_name, selected_year):
 def generate_graph(company_name, selected_year):
     if not company_name or not selected_year:
         return {}, {'display': 'none'}
+
     if company_name or selected_year:
         print(f"Displaying details for {company_name}")  # Debugging
 
