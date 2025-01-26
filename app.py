@@ -143,7 +143,7 @@ def get_market_cap(ticker_symbol):
 if os.path.exists(cache_file):
     # Load cached data if it exists
     cached_data = pd.read_csv(cache_file)
-    print("Loaded market cap data from cache.")
+    #print("Loaded market cap data from cache.")
 else:
     # Read the S&P 500 data from the CSV file
     sp500_df = pd.read_csv('sp500_companies_industries.csv')
@@ -178,7 +178,10 @@ industry_market_caps.columns = ['Industry', 'TotalMarketCap']
 
 # Merge total market cap back into the main DataFrame
 treemap_df = pd.merge(cached_data, industry_market_caps, on='Industry')
-
+# Set pandas options to display all columns and rows
+pd.set_option('display.max_columns', None)  # Show all columns
+pd.set_option('display.max_rows', None)     # Show all rows
+print(treemap_df) # this is the dataframe where the autocomplete options come from
 
 # Create the treemap plot using Plotly Express with darker colors
 def create_treemap():
@@ -208,11 +211,18 @@ def create_treemap():
     )
     return fig
 
+#the autocomplete options don't need the market cap information
+# Step 1: Read the file into a DataFrame
+file_path = 'nasdaqdf.csv'  # Replace with the path to your file
+company_data = pd.read_csv(file_path)
+
+# Step 2: Process the data to create autocomplete options
 
 autocomplete_options = [
-    {"label": f"{company_name} ({ticker})", "value": ticker} for company_name, ticker in
-    zip(treemap_df['Company'].values, treemap_df['Ticker'].values)
+    {"label": f"{company_name} ({ticker})", "value": ticker}
+    for company_name, ticker in zip(company_data['Company'], company_data['Ticker'])
 ]
+autocomplete_options = autocomplete_options[:2000]
 autocomplete_options1 = [
     {"label": f"{company_name}", "value": company_name} for company_name, ticker in
     zip(treemap_df['Company'].values, treemap_df['Ticker'].values)
