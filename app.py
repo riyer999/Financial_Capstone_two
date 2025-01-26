@@ -182,6 +182,7 @@ treemap_df = pd.merge(cached_data, industry_market_caps, on='Industry')
 pd.set_option('display.max_columns', None)  # Show all columns
 pd.set_option('display.max_rows', None)     # Show all rows
 print(treemap_df) # this is the dataframe where the autocomplete options come from
+treemap_df.to_csv('path_to_your_file.csv', index=False)
 
 # Create the treemap plot using Plotly Express with darker colors
 def create_treemap():
@@ -213,16 +214,20 @@ def create_treemap():
 
 #the autocomplete options don't need the market cap information
 # Step 1: Read the file into a DataFrame
-file_path = 'nasdaqdf.csv'  # Replace with the path to your file
-company_data = pd.read_csv(file_path)
+file_path = 'official_nasdaq.csv'  # Replace with the path to your file
+nasdaq_df = pd.read_csv(file_path)
+nasdaq_df = pd.read_csv(file_path, dtype={'MarketCap': float}, low_memory=False)
+
+print("this is thje nasdqu")
+print(nasdaq_df)
 
 # Step 2: Process the data to create autocomplete options
 
 autocomplete_options = [
     {"label": f"{company_name} ({ticker})", "value": ticker}
-    for company_name, ticker in zip(company_data['Company'], company_data['Ticker'])
+    for company_name, ticker in zip(nasdaq_df['Company'], nasdaq_df['Ticker'])
 ]
-autocomplete_options = autocomplete_options[:2000]
+autocomplete_options = autocomplete_options[:50]
 autocomplete_options1 = [
     {"label": f"{company_name}", "value": company_name} for company_name, ticker in
     zip(treemap_df['Company'].values, treemap_df['Ticker'].values)
@@ -784,10 +789,10 @@ def update_url_and_treemap(click_data, search_value, _):
 
     # Handle search input when a value is selected or typed in
     if search_value:
-        if search_value in treemap_df['Company'].values:
+        if search_value in nasdaq_df['Company'].values:
             return f'/item/{search_value}', dash.no_update
-        elif search_value in treemap_df['Ticker'].values:
-            company_name = treemap_df.loc[treemap_df['Ticker'] == search_value, 'Company'].values[0]
+        elif search_value in nasdaq_df['Ticker'].values:
+            company_name = nasdaq_df.loc[nasdaq_df['Ticker'] == search_value, 'Company'].values[0]
             return f'/item/{company_name}', dash.no_update
 
     # Default case (return to the root page with initial figure)
@@ -858,10 +863,10 @@ def update_company_graphic(pathname, selected_year):
         company_name_normalized = company_name.strip().lower()
 
         # Assuming you have a 'Normalized_Company' column for matching in treemap_df
-        treemap_df['Normalized_Company'] = treemap_df['Company'].str.strip().str.lower()
+        nasdaq_df['Normalized_Company'] = nasdaq_df['Company'].str.strip().str.lower()
 
         # Get the ticker corresponding to the company
-        matched_tickers = treemap_df[treemap_df['Normalized_Company'] == company_name_normalized]['Ticker']
+        matched_tickers = nasdaq_df[nasdaq_df['Normalized_Company'] == company_name_normalized]['Ticker']
         print(f"Matched tickers: {matched_tickers}")  # Debugging
 
         if not matched_tickers.empty:
@@ -1069,10 +1074,10 @@ def update_company_graphic_balance(pathname, selected_year):
         company_name_normalized = company_name.strip().lower()
 
         # Assuming you have a 'Normalized_Company' column for matching in treemap_df
-        treemap_df['Normalized_Company'] = treemap_df['Company'].str.strip().str.lower()
+        nasdaq_df['Normalized_Company'] = nasdaq_df['Company'].str.strip().str.lower()
 
         # Get the ticker corresponding to the company
-        matched_tickers = treemap_df[treemap_df['Normalized_Company'] == company_name_normalized]['Ticker']
+        matched_tickers = nasdaq_df[nasdaq_df['Normalized_Company'] == company_name_normalized]['Ticker']
         print(f"Matched tickers: {matched_tickers}")  # Debugging
 
         if not matched_tickers.empty:
