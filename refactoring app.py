@@ -385,6 +385,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
     # Fetch the financial data
     income_statement = ystock.incomestmt
     balance_sheet = ystock.balance_sheet
+    cashflow_statement = ystock.cashflow  # This fetches the cash flow statement
 
     # Fetch the stock's information (including shares outstanding)
     stock_info = ystock.info
@@ -475,6 +476,13 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
         'Gains Losses Not Affecting Retained Earnings',
         'Minority Interest',
     ]
+    cashflow_statement_keys = {
+        'Operating Cash Flow',
+        'Issuance Of Debt',
+        'Capital Expenditure',
+        'Repayment Of Debt',
+        'Repurchase Of Capital Stock',
+    }
 
     variable_names = {}
     # loop through the years and each key for the income statement
@@ -489,6 +497,8 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
                 if key == 'Pretax Income' and outstanding_shares:
                     print(f"Pretax Income for {ticker} {year}: {value}")  # Print Pretax Income
                     pretax_per_share = value / outstanding_shares
+                    market_cap_calc = pretax_per_share * outstanding_shares
+                    print(f"Market Cap for {ticker}: {market_cap_calc}")
                     print(f"Pretax Income per Share for {ticker} {year}: {pretax_per_share}")
                     Equity_Bond = (pretax_per_share / current_price) * 100
                     print(f"Equity Bond for {ticker} {year}: {Equity_Bond.item()}%")
