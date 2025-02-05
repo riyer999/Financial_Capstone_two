@@ -37,7 +37,7 @@ def generate_sankey(company, selected_year, company_dataframe):
             print(f"Selected ticker: {ticker}")  # Debugging
             # Load financial data for the selected company
             financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
-            print(financial_metrics.keys())
+            #print(financial_metrics.keys())
             if financial_metrics:
 
                 # Extract the financial metrics you need
@@ -378,13 +378,20 @@ def generate_balance_visual(company, selected_year, company_dataframe):
         #balance_fig.show()
         return balance_fig
 
-def load_data(ticker, years=['2020', '2021', '2022', '2023']):
+def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
     # Fetch the data dynamically using yfinance
     ystock = yf.Ticker(ticker)
 
     # Fetch the financial data
     income_statement = ystock.incomestmt
     balance_sheet = ystock.balance_sheet
+
+    # Fetch the stock's information (including shares outstanding)
+    stock_info = ystock.info
+    outstanding_shares = stock_info.get('sharesOutstanding')
+    print(f"Outstanding Shares: {outstanding_shares}")
+    current_price = stock_info.get('currentPrice')
+    print(f"Current Stock Price: ${current_price}")
 
     # List of keys to extract from the income statement
     income_statement_keys = [
@@ -416,6 +423,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
         'Cost Of Revenue',
         'Total Revenue',
         'Operating Revenue'
+        'Pretax Income'
     ]
 
     balance_sheet_keys = [
@@ -474,7 +482,18 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
         for key in income_statement_keys:
             variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
             try:
+                value = income_statement.loc[key, year]
                 variable_names[variable_name] = abs(income_statement.loc[key, year].item())
+
+                # Calculate Pretax Income per Share only for the 'Pretax Income' key
+                if key == 'Pretax Income' and outstanding_shares:
+                    print(f"Pretax Income for {ticker} {year}: {value}")  # Print Pretax Income
+                    pretax_per_share = value / outstanding_shares
+                    print(f"Pretax Income per Share for {ticker} {year}: {pretax_per_share}")
+                    Equity_Bond = (pretax_per_share / current_price) * 100
+                    print(f"Equity Bond for {ticker} {year}: {Equity_Bond.item()}%")
+
+
             except KeyError:
                 variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
@@ -688,7 +707,7 @@ compare_page_layout = html.Div([
                 html.Label("Select Year", style={'color': 'white'}),
                 dcc.Dropdown(
                     id="year-dropdown-1",
-                    options=[{"label": str(year), "value": str(year)} for year in range(2020, 2024)],
+                    options=[{"label": str(year), "value": str(year)} for year in range(2020, 2025)],
                     placeholder="Select Year"
                 ),
             ], style={'padding': '10px'}),
@@ -720,7 +739,7 @@ compare_page_layout = html.Div([
                 html.Label("Select Year", style={'color': 'white'}),
                 dcc.Dropdown(
                     id="year-dropdown-2",
-                    options=[{"label": str(year), "value": str(year)} for year in range(2020, 2024)],
+                    options=[{"label": str(year), "value": str(year)} for year in range(2020, 2025)],
                     placeholder="Select Year"
                 ),
             ], style={'padding': '10px'}),
@@ -800,7 +819,7 @@ def display_page(pathname, compare_value):
             html.Br(),
             dcc.Dropdown(
                 id='year-dropdown',
-                options=[{'label': year, 'value': year} for year in ['2020', '2021', '2022', '2023']],
+                options=[{'label': year, 'value': year} for year in ['2020', '2021', '2022', '2023', '2024']],
                 value='2020',  # Default value
                 placeholder='Select a year',  # Adds a placeholder
             ),
