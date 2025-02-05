@@ -827,11 +827,13 @@ def display_page(pathname, compare_value):
         return html.Div([
             html.H1(f"Details for {pathname.split('/')[-1].capitalize()}"),
             html.Br(),
-            dcc.Dropdown(
+            dcc.Slider(
                 id='year-dropdown',
-                options=[{'label': year, 'value': year} for year in ['2020', '2021', '2022', '2023', '2024']],
-                value='2020',  # Default value
-                placeholder='Select a year',  # Adds a placeholder
+                min=0,
+                max=4,
+                marks={i: year for i, year in enumerate(['2020', '2021', '2022', '2023', '2024'])},
+                value=0,  # Default value corresponds to '2020'
+                step=None
             ),
             dcc.Graph(
                 id='company-graphic',
@@ -864,14 +866,19 @@ def display_page(pathname, compare_value):
 @app.callback(
     Output('company-graphic', 'figure'),
     Output('company-graphic', 'style'),
-    [Input('url', 'pathname'),  # Use pathname to get company name from the URL
-     Input('year-dropdown', 'value')]  # Use the selected year for filtering
+    [Input('url', 'pathname'),
+     Input('year-dropdown', 'value')]
 )
-def update_company_graphic(pathname, selected_year):
-    # Extract the company name or identifier from the pathname (adjust if needed)
-    company_name = pathname.split('/')[-1]  # Assuming the last part of URL is the company name
+def update_company_graphic(pathname, slider_value):
+    # Define the list of years corresponding to slider indices
+    years = ['2020', '2021', '2022', '2023', '2024']
 
-    # Check if the company exists in treemap_df (you may need to adapt this to your actual column names)
+    # Convert the slider numeric value to the corresponding year string
+    selected_year = years[slider_value]
+
+    # Extract the company name from the pathname
+    company_name = pathname.split('/')[-1]
+
     if company_name in treemap_df['Company'].values:
         return generate_sankey(pathname, selected_year, treemap_df)
     else:
@@ -880,14 +887,19 @@ def update_company_graphic(pathname, selected_year):
 
 @app.callback(
     Output('company-balance-graphic', 'figure'),
-    [Input('url', 'pathname'),  # Use pathname to get company name from the URL
-     Input('year-dropdown', 'value')]  # Use the selected year for filtering
+    [Input('url', 'pathname'),
+     Input('year-dropdown', 'value')]
 )
-def update_company_graphic_balance(pathname, selected_year):
-    # Extract the company name or identifier from the pathname (adjust if needed)
-    company_name = pathname.split('/')[-1]  # Assuming the last part of URL is the company name
+def update_company_graphic_balance(pathname, slider_value):
+    # Define the list of years corresponding to slider indices
+    years = ['2020', '2021', '2022', '2023', '2024']
 
-    # Check if the company exists in treemap_df (you may need to adapt this to your actual column names)
+    # Convert the slider numeric value to the corresponding year string
+    selected_year = years[slider_value]
+
+    # Extract the company name from the pathname
+    company_name = pathname.split('/')[-1]
+
     if company_name in treemap_df['Company'].values:
         return generate_balance_visual(pathname, selected_year, treemap_df)
     else:
