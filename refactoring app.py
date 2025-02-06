@@ -378,6 +378,87 @@ def generate_balance_visual(company, selected_year, company_dataframe):
         #balance_fig.show()
         return balance_fig
 
+def generate_cashflow_visual(company, selected_year, company_dataframe):
+    if (company and selected_year) or (company and company.startswith('/item/')):
+        # Determine the correct company name
+        company_name = company.split('/')[-1] if company.startswith('/item/') else company
+        print(f"Displaying details for {company_name}")  # Debugging
+
+        # Normalize company name to match entries in DataFrame
+        company_name_normalized = company_name.strip().lower()
+        company_dataframe['Normalized_Company'] = company_dataframe['Company'].str.strip().str.lower()
+
+        # Get the ticker corresponding to the company
+        matched_tickers = company_dataframe[company_dataframe['Normalized_Company'] == company_name_normalized][
+            'Ticker']
+        print(f"Matched tickers: {matched_tickers}")  # Debugging
+
+    if not matched_tickers.empty:
+        ticker = matched_tickers.values[0]
+        print(f"Selected ticker: {ticker}")
+        financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
+
+        # Prepare DataFrame for Plotly
+        plot_data = []
+        max_value = 0  # Initialize the max value tracker
+
+        year_data = {
+            'Year': selected_year,
+            'Category1': ['Operating Cash Flow', 'Issuance Of Debt'],
+            'Value1': [
+                financial_metrics.get(f'Operating_Cash_Flow_{selected_year}', 0),
+                financial_metrics.get(f'Issuance_Of_Debt_{selected_year}', 0)
+            ],
+            'Category2': ['Capital Expenditure', 'Repayment Of Debt', 'Repurchase Of Capital Stock'],
+            'Value2': [
+                financial_metrics.get(f'Capital_Expenditure_{selected_year}', 0),
+                financial_metrics.get(f'Repayment_Of_Debt_{selected_year}', 0),
+                financial_metrics.get(f'Repurchase_Of_Capital_Stock_{selected_year}', 0)
+            ]
+        }
+        plot_data.append(year_data)
+        max_value = max(max_value, *year_data['Value1'], *year_data['Value2'])
+
+        # Create subplots
+        cash_fig = make_subplots(rows=1, cols=2, subplot_titles=("Money In", "Money Out"))
+
+        # Add traces
+        cash_fig.add_trace(go.Bar(
+            x=year_data['Category1'],
+            y=year_data['Value1'],
+            name=f'Year {year_data["Year"]} - Money In',
+            marker=dict(color='green')
+        ), row=1, col=1)
+
+        cash_fig.add_trace(go.Bar(
+            x=year_data['Category2'],
+            y=year_data['Value2'],
+            name=f'Year {year_data["Year"]} - Money Out',
+            marker=dict(color='red')
+        ), row=1, col=2)
+
+        # Update layout
+        cash_fig.update_layout(
+            title_text=f"Cash Flow for {ticker}",
+            xaxis_title="",
+            yaxis_title="Money in Billions of Dollars",
+            showlegend=False,
+            xaxis=dict(
+                tickmode='array',
+                tickvals=['Operating Cash Flow', 'Issuance Of Debt', 'Capital Expenditure', 'Repayment Of Debt',
+                          'Repurchase Of Capital Stock'],
+                ticktext=['Operating Cash Flow', 'Issuance Of Debt', 'Capital Expenditure', 'Repayment Of Debt',
+                          'Repurchase Of Capital Stock']
+            ),
+            yaxis=dict(range=[0, max_value * 1.1]),
+            yaxis2=dict(range=[0, max_value * 1.1])
+        )
+
+        # Show plot
+        cash_fig.show()
+        return cash_fig
+
+
 def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
     # Fetch the data dynamically using yfinance
     ystock = yf.Ticker(ticker)
@@ -512,6 +593,24 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
             variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
             try:
                 variable_names[variable_name] = abs(balance_sheet.loc[key, year].item())
+            except KeyError:
+                variable_names[variable_name] = 0  # Return 0 if key doesn't exist
+
+        for key in cashflow_statement_keys:
+            variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
+            try:
+                value = cashflow_statement.loc[key, year]
+
+                # Check if the value exists (it should not be empty or NaN)
+                if isinstance(value, pd.Series):
+                    if not value.empty:
+                        variable_names[variable_name] = abs(value.values[0])  # Use .values[0] to get the scalar
+                    else:
+                        variable_names[variable_name] = 0  # Default to 0 if the value is empty
+                elif pd.notna(value):  # Handle the case where it's not NaN
+                    variable_names[variable_name] = abs(value)  # It's already a scalar
+                else:
+                    variable_names[variable_name] = 0  # Default to 0 if NaN or empty
             except KeyError:
                 variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
@@ -818,6 +917,7 @@ def update_url_and_treemap(click_data, search_value, _):
      Output('sidebar', 'style')],  # Control sidebar visibility
     [Input('url', 'pathname'), Input('compare-button', 'value')]
 )
+
 def display_page(pathname, compare_value):
     if compare_value == 2 or pathname == '/compare':
         # Compare page layout and hide sidebar
@@ -843,6 +943,11 @@ def display_page(pathname, compare_value):
                 id='company-balance-graphic',  # Added balance graphic
                 style={'height': '500px', 'width': '100%'}
             ),
+            dcc.Graph(
+                id='company-cashflow-graphic',  # New cash flow visualization
+                style={'height': '500px', 'width': '100%'}
+            ),
+
             html.A(
                 html.Button("Back to Treemap", id="back-button", style={
                     'position': 'fixed',  # Position the button relative to the viewport
@@ -862,7 +967,7 @@ def display_page(pathname, compare_value):
     # Default to main page with sidebar
     return main_page_layout, {'width': 340, 'margin-left': 35, 'margin-top': 35}
 
-
+# all code for the main page
 @app.callback(
     Output('company-graphic', 'figure'),
     Output('company-graphic', 'style'),
@@ -904,6 +1009,27 @@ def update_company_graphic_balance(pathname, slider_value):
         return generate_balance_visual(pathname, selected_year, treemap_df)
     else:
         return generate_balance_visual(pathname, selected_year, nasdaq_df)
+
+@app.callback(
+    Output('company-cashflow-graphic', 'figure'),
+    [Input('url', 'pathname'),
+     Input('year-dropdown', 'value')]
+)
+
+def update_company_cash(pathname, slider_value):
+    # Define the list of years corresponding to slider indices
+    years = ['2020', '2021', '2022', '2023', '2024']
+
+    # Convert the slider numeric value to the corresponding year string
+    selected_year = years[slider_value]
+
+    # Extract the company name from the pathname
+    company_name = pathname.split('/')[-1]
+
+    if company_name in treemap_df['Company'].values:
+        return generate_cashflow_visual(pathname, selected_year, treemap_df)
+    else:
+        return generate_cashflow_visual(pathname, selected_year, nasdaq_df)
 
 
 if __name__ == "__main__":

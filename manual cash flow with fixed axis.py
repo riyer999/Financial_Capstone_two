@@ -22,7 +22,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
 
     variable_names = {}
 
-    # loop through the years and each key for the income statement
+    # loop through the years and each key for the cash flow statement
     for year in years:
         for key in cashflow_statement_keys:
             variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
