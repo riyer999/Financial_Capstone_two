@@ -408,7 +408,7 @@ def generate_sankey(company, selected_year, company_dataframe):
 
 
 
-generate_sankey("JPMorgan Chase", '2021', nasdaq_df)
+generate_sankey("Apple Inc.", '2021', nasdaq_df)
 #Coca-Cola Company (The)
 #JPMorgan Chase
 #Apple Inc.

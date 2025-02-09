@@ -47,6 +47,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                 operating_income = financial_metrics[f'Operating_Income_{selected_year}'] / 1e9
                 operating_expense = financial_metrics[f'Operating_Expense_{selected_year}'] / 1e9
                 tax_provision = financial_metrics[f'Tax_Provision_{selected_year}'] / 1e9
+                rnd = financial_metrics[f'Research_And_Development_{selected_year}'] / 1e9
                 sga = financial_metrics[f'Selling_General_And_Administration_{selected_year}'] / 1e9
                 other = financial_metrics[f'Other_Income_Expense_{selected_year}'] / 1e9
                 net_income = financial_metrics[f'Net_Income_{selected_year}'] / 1e9
@@ -74,7 +75,6 @@ def generate_sankey(company, selected_year, company_dataframe):
                     barmode='group',
                     paper_bgcolor='#F8F8FF'
                 )
-
                 color_link = ['#000000', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',
                               '#008941', '#006FA6', '#A30059', '#FFDBE5', '#7A4900',
                               '#0000A6', '#63FFAC', '#B79762', '#004D43', '#8FB0FF',
@@ -98,6 +98,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                               '#CB7E98', '#A4E804', '#324E72', '#6A3A4C'
                               ]
 
+
                 label = ['Revenue',  # this one is fine
                          'Gross Profit',  # this one is also fine
                          'Cost of Revenues',
@@ -107,21 +108,33 @@ def generate_sankey(company, selected_year, company_dataframe):
                          'Tax',
                          'Other',
                          'SG&A',
-                         'Other Expenses'
+                         'Other Expenses',
+                         'R&D' #new entry
                          ]
 
                 color_for_nodes = ['steelblue', 'green', 'red', 'green', 'red', 'green', 'red', 'red',
-                                   'red', 'red']
+                                   'red', 'red', 'red']
 
                 color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed',
                                    'lightgreen',
-                                   'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
+                                   'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
 
                 # Data
-                source = [0, 0, 1, 1, 3, 3, 3, 4, 4]
-                target = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+                source = [0, 0, 1, 1, 3, 3, 3, 4, 4, 4]
+                target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
                 value = [gross_profit_value, cost_revenue, operating_income, operating_expense, net_income,
-                         tax_provision, other, sga, other_operating_expenses]
+                         tax_provision, other, sga, other_operating_expenses, rnd]
+
+                value = [
+                    v if v > 0 else 1e-6  # If v is 0, set it to 1e-6
+                    for v in [
+                        gross_profit_value, cost_revenue, operating_income, operating_expense,
+                        net_income, tax_provision, other, sga, other_operating_expenses, rnd
+                    ]
+                ]
+                print(f"this is the value of gross profit{gross_profit_value}")
+
+
 
                 link = dict(source=source, target=target, value=value, color=color_link)
                 node = dict(label=label, pad=35, thickness=20)
@@ -129,9 +142,9 @@ def generate_sankey(company, selected_year, company_dataframe):
 
                 # Coordinates for nodes
                 x = [0.1, 0.35, 0.35, 0.6,
-                     0.6, 0.85, 0.85, 0.85, 0.85, 0.85]
+                     0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
                 y = [0.40, 0.25, 0.70, 0.1,
-                     0.45, 0.0, 0.15, 0.30, 0.45, 0.60]
+                     0.45, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75]
                 x = [.001 if v == 0 else .999 if v == 1 else v for v in x]
                 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]
 
@@ -148,6 +161,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                 operating_profit_margin = safe_divide(operating_income, total_revenue)
                 operating_expenses_margin = safe_divide(operating_expense, total_revenue)
                 tax_provision_margin = safe_divide(tax_provision, total_revenue)
+                rnd_margin_percentage = safe_divide(rnd, gross_profit_value)
 
                 # Add custom hover labels for nodes
                 custom_hover_data = [
@@ -163,7 +177,9 @@ def generate_sankey(company, selected_year, company_dataframe):
                     f"Tax: {tax_provision:.2f}B<br>Percentage of Revenue: {tax_provision_margin:.2f}%",  # Tax
                     "",  # Other
                     f"SG&A: {sga:.2f}B<br>Percentage of Gross Profit: {sga_margin_percentage:.2f}%",
-                    ""  # Other Expenses
+                    "",  # Other Expenses
+                    f"R&D: {rnd:.2f}B<br>Percentage of Gross Profit: {rnd_margin_percentage:.2f}%"
+
                 ]
 
                 sankey_fig = go.Figure(data=[go.Sankey(
@@ -223,6 +239,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                 )
                 fig['layout']['xaxis'].update(domain=[0.0, .06])  # X domain for the bar chart ###
                 fig['layout']['yaxis'].update(domain=[0.22, 1])  # Y domain for the bar chart ###
+                #fig.show()
 
                 return fig, {'display': 'block'}
 
@@ -505,6 +522,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
         'Other Operating Expenses',
         'Selling General And Administration',
         'General And Administrative Expense',
+        'Research And Development',
         'Gross Profit',
         'Cost Of Revenue',
         'Total Revenue',
