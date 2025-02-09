@@ -4,7 +4,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 # Read the filtered data from the CSV file into a DataFrame
-equitybond_df = pd.read_csv('filtered_equity_bond_data.csv')
+equitybond_df = pd.read_csv('../filtered_equity_bond_data.csv')
 
 # Check the first few rows to inspect the data
 print(equitybond_df.head())

@@ -2,7 +2,7 @@ import pandas as pd
 import re
 
 # Load the data from the CSV file
-file_path = 'equitybond.csv'
+file_path = '../equitybond.csv'
 with open(file_path, 'r') as file:
     data = file.readlines()
 

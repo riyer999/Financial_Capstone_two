@@ -1,7 +1,7 @@
 import yfinance as yf
 import pandas as pd
 import os
-from dash import Dash, dash, dcc, html, Input, Output, State, no_update
+from dash import Dash, dash, dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -18,12 +18,15 @@ cache_file = 'market_cap_cache.csv'
 
 
 # Load financial data for a given company and year
-def load_data(ticker, years=['2020', '2021', '2022', '2023']):
-    with open('allData.pkl', 'rb') as file:
-        allData = pickle.load(file)
+import yfinance as yf
 
-    income_statement = allData[ticker]['income_statement']
-    balance_sheet = allData[ticker]['balance_sheet']
+def load_data(ticker, years=['2020', '2021', '2022', '2023']):
+    # Fetch the data dynamically using yfinance
+    ystock = yf.Ticker(ticker)
+
+    # Fetch the financial data
+    income_statement = ystock.incomestmt
+    balance_sheet = ystock.balance_sheet
 
     # List of keys to extract from the income statement
     income_statement_keys = [
@@ -128,6 +131,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023']):
     return variable_names  # Return the dictionary with variable names and values
 
 
+
 # Function to get market capitalization from Yahoo Finance
 def get_market_cap(ticker_symbol):
     stock = yf.Ticker(ticker_symbol)
@@ -139,7 +143,7 @@ def get_market_cap(ticker_symbol):
 if os.path.exists(cache_file):
     # Load cached data if it exists
     cached_data = pd.read_csv(cache_file)
-    print("Loaded market cap data from cache.")
+    #print("Loaded market cap data from cache.")
 else:
     # Read the S&P 500 data from the CSV file
     sp500_df = pd.read_csv('sp500_companies_industries.csv')
@@ -174,7 +178,11 @@ industry_market_caps.columns = ['Industry', 'TotalMarketCap']
 
 # Merge total market cap back into the main DataFrame
 treemap_df = pd.merge(cached_data, industry_market_caps, on='Industry')
-
+# Set pandas options to display all columns and rows
+pd.set_option('display.max_columns', None)  # Show all columns
+pd.set_option('display.max_rows', None)     # Show all rows
+#print(treemap_df) # this is the dataframe where the autocomplete options come from
+treemap_df.to_csv('path_to_your_file.csv', index=False)
 
 # Create the treemap plot using Plotly Express with darker colors
 def create_treemap():
@@ -204,11 +212,20 @@ def create_treemap():
     )
     return fig
 
+#the autocomplete options don't need the market cap information
+# Step 1: Read the file into a DataFrame
+file_path = 'us_official_nasdaq.csv'  # Replace with the path to your file
+nasdaq_df = pd.read_csv(file_path)
+nasdaq_df = pd.read_csv(file_path, dtype={'MarketCap': float}, low_memory=False)
+
+
+# Step 2: Process the data to create autocomplete options
 
 autocomplete_options = [
-    {"label": f"{company_name} ({ticker})", "value": ticker} for company_name, ticker in
-    zip(treemap_df['Company'].values, treemap_df['Ticker'].values)
+    {"label": f"{company_name} ({ticker})", "value": ticker}
+    for company_name, ticker in zip(nasdaq_df['Company'], nasdaq_df['Ticker'])
 ]
+#autocomplete_options = autocomplete_options[:50]
 autocomplete_options1 = [
     {"label": f"{company_name}", "value": company_name} for company_name, ticker in
     zip(treemap_df['Company'].values, treemap_df['Ticker'].values)
@@ -305,6 +322,7 @@ def graph4(company_name, selected_year):
 def generate_graph(company_name, selected_year):
     if not company_name or not selected_year:
         return {}, {'display': 'none'}
+
     if company_name or selected_year:
         print(f"Displaying details for {company_name}")  # Debugging
 
@@ -420,6 +438,29 @@ def generate_graph(company_name, selected_year):
                      0.45, 0.0, 0.15, 0.30, 0.45, 0.60]
                 x = [.001 if v == 0 else .999 if v == 1 else v for v in x]
                 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]
+                # Calculate percentage
+                gross_margin_percentage = (gross_profit_value / total_revenue) * 100
+                sga_margin_percentage = (sga / gross_profit_value) * 100
+                net_profit_margin = (net_income / total_revenue) * 100
+                cost_revenue_margin = (cost_revenue / total_revenue) * 100
+                #total_revenue_margin = (total_revenue / get_market_cap(ticker)) * 100
+                operating_profit_margin = (operating_income / total_revenue) * 100
+                operating_expenses_margin = (operating_expense / total_revenue) * 100
+                tax_provision_margin = (tax_provision / total_revenue) * 100
+
+                # Add custom hover labels for nodes
+                custom_hover_data = [
+                    f"Total Revenue: {total_revenue:.2f}B",  # Revenue node (no custom data needed)
+                    f"Gross Profit: {gross_profit_value:.2f}B<br>Percentage of Revenue: {gross_margin_percentage:.2f}%",
+                    f"Cost of Revenue: {cost_revenue:.2f}B<br>Percentage of Revenue: {cost_revenue_margin:.2f}%",  # Cost of Revenues
+                    f"Operating Profit: {operating_income:.2f}B<br>Percentage of Revenue: {operating_profit_margin:.2f}%",  # Operating Profit
+                    f"Operating Expenses: {operating_expense:.2f}B<br>Percentage of Revenue: {operating_expenses_margin:.2f}%",  # Operating Expenses
+                    f"Net Profit: {net_income:.2f}B<br>Percentage of Revenue: {net_profit_margin:.2f}%",  # Net Profit
+                    f"Tax: {tax_provision:.2f}B<br>Percentage of Revenue: {tax_provision_margin:.2f}%",  # Tax
+                    "",  # Other
+                    f"SG&A: {sga:.2f}B<br>Percentage of Gross Profit: {sga_margin_percentage:.2f}%",
+                    ""  # Other Expenses
+                ]
 
                 sankey_fig = go.Figure(data=[go.Sankey(
                     textfont=dict(color="black", size=10),
@@ -428,13 +469,16 @@ def generate_graph(company_name, selected_year):
                         line=dict(color="white", width=1),
                         label=label,
                         x=x,
-                        y=y
+                        y=y,
+                        customdata=custom_hover_data,  # Add custom hover data
+                        hovertemplate="%{customdata}<extra></extra>"  # Use custom hover labels
                     ),
                     link=dict(
                         source=source,
                         target=target,
                         value=value
-                    ))])
+                    )
+                )])
 
                 sankey_fig.update_layout(
                     hovermode='x',
@@ -462,7 +506,7 @@ def generate_graph(company_name, selected_year):
                     fig.add_trace(trace, row=1, col=2)
 
                 fig.update_layout(
-                    title_text="Market Cap and Income Statement Sankey",
+                    title_text="Market Cap and Income Statement",
                     paper_bgcolor='#F8F8FF'
                 )
 
@@ -497,6 +541,7 @@ def generate_balance_graph(company_name, selected_year):
 
         # Replace this with actual financial metrics from `financial_data`
         data = {
+            "root": [],
             "category": [],
             "subcategory": [],
             "type": [],
@@ -504,7 +549,7 @@ def generate_balance_graph(company_name, selected_year):
             "value": []
         }
 
-        # Define hierarchy for treemap
+        # Define hierarchy for treemap with a root node
         hierarchy = {
             "Total Assets": {
                 "Current Assets": {
@@ -557,7 +602,7 @@ def generate_balance_graph(company_name, selected_year):
                 }
             },
             "Total Liabilities and Equity": {
-                "Total Liabilities Net Minority Interest": {
+                "Total Liabilities": {
                     "Current Liabilities": [
                         "Payables And Accrued Expenses",
                         "Pensionand Other Post Retirement Benefit Plans ...",
@@ -570,7 +615,7 @@ def generate_balance_graph(company_name, selected_year):
                         "Other Non Current Liabilities"
                     ]
                 },
-                "Total Equity Gross Minority Interest": {
+                "Total Equity": {
                     "Stockholders Equity": [
                         "Stockholders Equity"
                     ],
@@ -582,17 +627,16 @@ def generate_balance_graph(company_name, selected_year):
         }
 
         # Dynamically build data for the treemap
-
         for category, subcategories in hierarchy.items():
             for subcategory, types in subcategories.items():
                 for type_, items in types.items():
                     for item in items:
                         # Retrieve the corresponding financial metric for the selected year
                         metric_key = f"{item.replace(' ', '_')}_{selected_year}"
-                        value = financial_metrics.get(metric_key,
-                                                      0) / 1e9  # Convert to billions for visualization
+                        value = financial_metrics.get(metric_key, 0) / 1e9  # Convert to billions for visualization
 
                         # Append data for treemap
+                        data["root"].append("Balance Sheet")  # Add root node
                         data["category"].append(category)
                         data["subcategory"].append(subcategory)
                         data["type"].append(type_)
@@ -609,13 +653,13 @@ def generate_balance_graph(company_name, selected_year):
         # Create the treemap
         balance_fig = px.treemap(
             data,
-            path=['category', 'subcategory', 'type', 'item'],
+            path=['root', 'category', 'subcategory', 'type', 'item'],  # Include root node in path
             values='value'
         )
 
         # Update hover labels using hovertemplate
         balance_fig.update_traces(
-            maxdepth=2,
+            maxdepth=3,  # Adjust depth to include all levels
             hovertemplate='<b>%{label}</b><br>%{value} Billion<extra></extra>',
             textfont=dict(size=23)  # Adjust the font size
         )
@@ -743,10 +787,10 @@ def update_url_and_treemap(click_data, search_value, _):
 
     # Handle search input when a value is selected or typed in
     if search_value:
-        if search_value in treemap_df['Company'].values:
+        if search_value in nasdaq_df['Company'].values:
             return f'/item/{search_value}', dash.no_update
-        elif search_value in treemap_df['Ticker'].values:
-            company_name = treemap_df.loc[treemap_df['Ticker'] == search_value, 'Company'].values[0]
+        elif search_value in nasdaq_df['Ticker'].values:
+            company_name = nasdaq_df.loc[nasdaq_df['Ticker'] == search_value, 'Company'].values[0]
             return f'/item/{company_name}', dash.no_update
 
     # Default case (return to the root page with initial figure)
@@ -817,10 +861,10 @@ def update_company_graphic(pathname, selected_year):
         company_name_normalized = company_name.strip().lower()
 
         # Assuming you have a 'Normalized_Company' column for matching in treemap_df
-        treemap_df['Normalized_Company'] = treemap_df['Company'].str.strip().str.lower()
+        nasdaq_df['Normalized_Company'] = nasdaq_df['Company'].str.strip().str.lower()
 
         # Get the ticker corresponding to the company
-        matched_tickers = treemap_df[treemap_df['Normalized_Company'] == company_name_normalized]['Ticker']
+        matched_tickers = nasdaq_df[nasdaq_df['Normalized_Company'] == company_name_normalized]['Ticker']
         print(f"Matched tickers: {matched_tickers}")  # Debugging
 
         if not matched_tickers.empty:
@@ -926,6 +970,33 @@ def update_company_graphic(pathname, selected_year):
                 x = [.001 if v == 0 else .999 if v == 1 else v for v in x]
                 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]
 
+                # Calculate percentage
+                gross_margin_percentage = (gross_profit_value / total_revenue) * 100
+                sga_margin_percentage = (sga / gross_profit_value) * 100
+                net_profit_margin = (net_income / total_revenue) * 100
+                cost_revenue_margin = (cost_revenue / total_revenue) * 100
+                # total_revenue_margin = (total_revenue / get_market_cap(ticker)) * 100
+                operating_profit_margin = (operating_income / total_revenue) * 100
+                operating_expenses_margin = (operating_expense / total_revenue) * 100
+                tax_provision_margin = (tax_provision / total_revenue) * 100
+
+                # Add custom hover labels for nodes
+                custom_hover_data = [
+                    f"Total Revenue: {total_revenue:.2f}B",  # Revenue node (no custom data needed)
+                    f"Gross Profit: {gross_profit_value:.2f}B<br>Percentage of Revenue: {gross_margin_percentage:.2f}%",
+                    f"Cost of Revenue: {cost_revenue:.2f}B<br>Percentage of Revenue: {cost_revenue_margin:.2f}%",
+                    # Cost of Revenues
+                    f"Operating Profit: {operating_income:.2f}B<br>Percentage of Revenue: {operating_profit_margin:.2f}%",
+                    # Operating Profit
+                    f"Operating Expenses: {operating_expense:.2f}B<br>Percentage of Revenue: {operating_expenses_margin:.2f}%",
+                    # Operating Expenses
+                    f"Net Profit: {net_income:.2f}B<br>Percentage of Revenue: {net_profit_margin:.2f}%",  # Net Profit
+                    f"Tax: {tax_provision:.2f}B<br>Percentage of Revenue: {tax_provision_margin:.2f}%",  # Tax
+                    "",  # Other
+                    f"SG&A: {sga:.2f}B<br>Percentage of Gross Profit: {sga_margin_percentage:.2f}%",
+                    ""  # Other Expenses
+                ]
+
                 sankey_fig = go.Figure(data=[go.Sankey(
                     textfont=dict(color="black", size=10),
                     node=dict(
@@ -933,13 +1004,16 @@ def update_company_graphic(pathname, selected_year):
                         line=dict(color="white", width=1),
                         label=label,
                         x=x,
-                        y=y
+                        y=y,
+                        customdata=custom_hover_data,  # Add custom hover data
+                        hovertemplate="%{customdata}<extra></extra>"  # Use custom hover labels
                     ),
                     link=dict(
                         source=source,
                         target=target,
                         value=value
-                    ))])
+                    )
+                )])
 
                 sankey_fig.update_layout(
                     hovermode='x',
@@ -967,7 +1041,7 @@ def update_company_graphic(pathname, selected_year):
                     fig.add_trace(trace, row=1, col=2)
 
                 fig.update_layout(
-                    title_text="Market Cap and Income Statement Sankey",
+                    title_text="Market Cap and Income Statement",
                     paper_bgcolor='#F8F8FF'
                 )
 
@@ -998,10 +1072,10 @@ def update_company_graphic_balance(pathname, selected_year):
         company_name_normalized = company_name.strip().lower()
 
         # Assuming you have a 'Normalized_Company' column for matching in treemap_df
-        treemap_df['Normalized_Company'] = treemap_df['Company'].str.strip().str.lower()
+        nasdaq_df['Normalized_Company'] = nasdaq_df['Company'].str.strip().str.lower()
 
         # Get the ticker corresponding to the company
-        matched_tickers = treemap_df[treemap_df['Normalized_Company'] == company_name_normalized]['Ticker']
+        matched_tickers = nasdaq_df[nasdaq_df['Normalized_Company'] == company_name_normalized]['Ticker']
         print(f"Matched tickers: {matched_tickers}")  # Debugging
 
         if not matched_tickers.empty:
@@ -1011,6 +1085,7 @@ def update_company_graphic_balance(pathname, selected_year):
 
             # Replace this with actual financial metrics from `financial_data`
             data = {
+                "root": [],
                 "category": [],
                 "subcategory": [],
                 "type": [],
@@ -1018,7 +1093,7 @@ def update_company_graphic_balance(pathname, selected_year):
                 "value": []
             }
 
-            # Define hierarchy for treemap
+            # Define hierarchy for treemap with a root node
             hierarchy = {
                 "Total Assets": {
                     "Current Assets": {
@@ -1071,7 +1146,7 @@ def update_company_graphic_balance(pathname, selected_year):
                     }
                 },
                 "Total Liabilities and Equity": {
-                    "Total Liabilities Net Minority Interest": {
+                    "Total Liabilities": {
                         "Current Liabilities": [
                             "Payables And Accrued Expenses",
                             "Pensionand Other Post Retirement Benefit Plans ...",
@@ -1084,7 +1159,7 @@ def update_company_graphic_balance(pathname, selected_year):
                             "Other Non Current Liabilities"
                         ]
                     },
-                    "Total Equity Gross Minority Interest": {
+                    "Equity": {
                         "Stockholders Equity": [
                             "Stockholders Equity"
                         ],
@@ -1096,17 +1171,16 @@ def update_company_graphic_balance(pathname, selected_year):
             }
 
             # Dynamically build data for the treemap
-
             for category, subcategories in hierarchy.items():
                 for subcategory, types in subcategories.items():
                     for type_, items in types.items():
                         for item in items:
                             # Retrieve the corresponding financial metric for the selected year
                             metric_key = f"{item.replace(' ', '_')}_{selected_year}"
-                            value = financial_metrics.get(metric_key,
-                                                          0) / 1e9  # Convert to billions for visualization
+                            value = financial_metrics.get(metric_key, 0) / 1e9  # Convert to billions for visualization
 
                             # Append data for treemap
+                            data["root"].append("Balance Sheet")  # Add root node
                             data["category"].append(category)
                             data["subcategory"].append(subcategory)
                             data["type"].append(type_)
@@ -1123,13 +1197,13 @@ def update_company_graphic_balance(pathname, selected_year):
             # Create the treemap
             balance_fig = px.treemap(
                 data,
-                path=['category', 'subcategory', 'type', 'item'],
+                path=['root', 'category', 'subcategory', 'type', 'item'],  # Include root node in path
                 values='value'
             )
 
             # Update hover labels using hovertemplate
             balance_fig.update_traces(
-                maxdepth=2,
+                maxdepth=3,  # Adjust depth to include all levels
                 hovertemplate='<b>%{label}</b><br>%{value} Billion<extra></extra>',
                 textfont=dict(size=23)  # Adjust the font size
             )
@@ -1145,4 +1219,3 @@ def update_company_graphic_balance(pathname, selected_year):
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=8060)
-    

@@ -3,7 +3,7 @@ import numpy as np
 
 # Assuming 'equitybond_df' contains the data with 'Ticker' and 'Equity Bond'
 # If not, load your data like this: equitybond_df = pd.read_csv('filtered_equity_bond_data.csv')
-equitybond_df = pd.read_csv('filtered_equity_bond_data.csv')
+equitybond_df = pd.read_csv('../filtered_equity_bond_data.csv')
 # Define the treasury rate and its corresponding scale
 treasury_rate = 4.0  # Treasury rate in percentage
 treasury_rate_scale = 3  # This corresponds to a rating of 3 (for treasury rate)

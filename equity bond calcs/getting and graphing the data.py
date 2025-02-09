@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 
 # Load NASDAQ tickers
-file_path = 'us_official_nasdaq.csv'
+file_path = '../us_official_nasdaq.csv'
 nasdaq_df = pd.read_csv(file_path)
 tickers = nasdaq_df['Ticker'].tolist()
 

@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # Step 1: Read the file into a DataFrame
-file_path = 'us_official_nasdaq.csv'  # Replace with the path to your file
+file_path = '../us_official_nasdaq.csv'  # Replace with the path to your file
 nasdaq_df = pd.read_csv(file_path)
 nasdaq_df = pd.read_csv(file_path, dtype={'MarketCap': float}, low_memory=False)
 
