@@ -185,7 +185,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                 sankey_fig = go.Figure(data=[go.Sankey(
                     textfont=dict(color="black", size=10),
                     node=dict(
-                        pad=35,
+                        pad=8, #from 35
                         line=dict(color="white", width=1),
                         label=label,
                         x=x,

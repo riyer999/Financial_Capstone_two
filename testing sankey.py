@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # Step 1: Read the file into a DataFrame
-file_path = '../us_official_nasdaq.csv'  # Replace with the path to your file
+file_path = 'us_official_nasdaq.csv'  # Replace with the path to your file
 nasdaq_df = pd.read_csv(file_path)
 nasdaq_df = pd.read_csv(file_path, dtype={'MarketCap': float}, low_memory=False)
 
@@ -348,7 +348,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                 sankey_fig = go.Figure(data=[go.Sankey(
                     textfont=dict(color="black", size=10),
                     node=dict(
-                        pad=35,
+                        pad=20,
                         line=dict(color="white", width=1),
                         label=label,
                         x=x,
