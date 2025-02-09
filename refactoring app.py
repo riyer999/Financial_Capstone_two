@@ -136,14 +136,18 @@ def generate_sankey(company, selected_year, company_dataframe):
                 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]
 
                 # Calculate percentage
-                gross_margin_percentage = (gross_profit_value / total_revenue) * 100
-                sga_margin_percentage = (sga / gross_profit_value) * 100
-                net_profit_margin = (net_income / total_revenue) * 100
-                cost_revenue_margin = (cost_revenue / total_revenue) * 100
-                # total_revenue_margin = (total_revenue / get_market_cap(ticker)) * 100
-                operating_profit_margin = (operating_income / total_revenue) * 100
-                operating_expenses_margin = (operating_expense / total_revenue) * 100
-                tax_provision_margin = (tax_provision / total_revenue) * 100
+                # Avoid division by zero by checking if the denominator is zero or too small
+                def safe_divide(numerator, denominator):
+                    return (numerator / denominator) * 100 if denominator and abs(denominator) > 1e-9 else 0
+
+                gross_margin_percentage = safe_divide(gross_profit_value, total_revenue)
+                sga_margin_percentage = safe_divide(sga, gross_profit_value)
+                net_profit_margin = safe_divide(net_income, total_revenue)
+                cost_revenue_margin = safe_divide(cost_revenue, total_revenue)
+                # total_revenue_margin = safe_divide(total_revenue, get_market_cap(ticker))  # Uncomment if needed
+                operating_profit_margin = safe_divide(operating_income, total_revenue)
+                operating_expenses_margin = safe_divide(operating_expense, total_revenue)
+                tax_provision_margin = safe_divide(tax_provision, total_revenue)
 
                 # Add custom hover labels for nodes
                 custom_hover_data = [
@@ -455,7 +459,7 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
         )
 
         # Show plot
-        cash_fig.show()
+       # cash_fig.show()
         return cash_fig
 
 
@@ -740,7 +744,7 @@ app.layout = dbc.Container([
                     id="autocomplete-dropdown",
                     options=autocomplete_options,
                     placeholder="Search Company...",
-                    style={'width': 200, 'backgroundColor': '#333333', 'color': '#000000'},
+                    style={'width': 400, 'backgroundColor': '#333333', 'color': '#000000'}, # from 200
                     searchable=True,
                     multi=False,
 
