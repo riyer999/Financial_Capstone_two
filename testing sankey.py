@@ -288,6 +288,15 @@ def generate_sankey(company, selected_year, company_dataframe):
                 value = [gross_profit_value, cost_revenue, operating_income, operating_expense, net_income,
                          tax_provision, other, sga, other_operating_expenses, rnd]
 
+                value = [
+                    v if v > 0 else 1e-6  # If v is 0, set it to 1e-6
+                    for v in [
+                        gross_profit_value, cost_revenue, operating_income, operating_expense,
+                        net_income, tax_provision, other, sga, other_operating_expenses, rnd
+                    ]
+                ]
+                print(f"this is the value of gross profit{gross_profit_value}")
+
 
 
                 link = dict(source=source, target=target, value=value, color=color_link)
