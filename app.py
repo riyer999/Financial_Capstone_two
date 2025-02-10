@@ -19,7 +19,7 @@ def generate_sankey(company, selected_year, company_dataframe):
     if (company and selected_year) or (company and company.startswith('/item/')):
         # Determine the correct company name
         company_name = company.split('/')[-1] if company.startswith('/item/') else company
-        print(f"Displaying details for {company_name}")  # Debugging
+        #print(f"Displaying details for {company_name}")  # Debugging
 
         # Normalize company name to match entries in your DataFrame
         company_name_normalized = company_name.strip().lower()
@@ -30,7 +30,7 @@ def generate_sankey(company, selected_year, company_dataframe):
         # Get the ticker corresponding to the company
         matched_tickers = company_dataframe[company_dataframe['Normalized_Company'] == company_name_normalized][
             'Ticker']
-        print(f"Matched tickers: {matched_tickers}")  # Debugging
+        #print(f"Matched tickers: {matched_tickers}")  # Debugging
 
         if not matched_tickers.empty:
             ticker = matched_tickers.values[0]
@@ -132,7 +132,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                         net_income, tax_provision, other, sga, other_operating_expenses, rnd
                     ]
                 ]
-                print(f"this is the value of gross profit{gross_profit_value}")
+                #print(f"this is the value of gross profit: {gross_profit_value}")
 
 
 
@@ -247,7 +247,7 @@ def generate_balance_visual(company, selected_year, company_dataframe):
     if (company and selected_year) or (company and company.startswith('/item/')):
         # Determine the correct company name
         company_name = company.split('/')[-1] if company.startswith('/item/') else company
-        print(f"Displaying details for {company_name}")  # Debugging
+        #print(f"Displaying details for {company_name}")  # Debugging
 
         # Normalize company name to match entries in your DataFrame
         company_name_normalized = company_name.strip().lower()
@@ -258,11 +258,11 @@ def generate_balance_visual(company, selected_year, company_dataframe):
         # Get the ticker corresponding to the company
         matched_tickers = company_dataframe[company_dataframe['Normalized_Company'] == company_name_normalized][
             'Ticker']
-        print(f"Matched tickers: {matched_tickers}")  # Debugging
+        #print(f"Matched tickers: {matched_tickers}")  # Debugging
 
     if not matched_tickers.empty:
         ticker = matched_tickers.values[0]
-        print(f"Selected ticker: {ticker}")
+        #print(f"Selected ticker: {ticker}")
         financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
 
         # Replace this with actual financial metrics from `financial_data`
@@ -403,7 +403,7 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
     if (company and selected_year) or (company and company.startswith('/item/')):
         # Determine the correct company name
         company_name = company.split('/')[-1] if company.startswith('/item/') else company
-        print(f"Displaying details for {company_name}")  # Debugging
+        #print(f"Displaying details for {company_name}")  # Debugging
 
         # Normalize company name to match entries in DataFrame
         company_name_normalized = company_name.strip().lower()
@@ -412,11 +412,11 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
         # Get the ticker corresponding to the company
         matched_tickers = company_dataframe[company_dataframe['Normalized_Company'] == company_name_normalized][
             'Ticker']
-        print(f"Matched tickers: {matched_tickers}")  # Debugging
+        #print(f"Matched tickers: {matched_tickers}")  # Debugging
 
     if not matched_tickers.empty:
         ticker = matched_tickers.values[0]
-        print(f"Selected ticker: {ticker}")
+        #print(f"Selected ticker: {ticker}")
         financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
 
         # Prepare DataFrame for Plotly
