@@ -46,7 +46,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
 
 
 # Load actual data
-ticker = "JPM"
+ticker = "MAR"
 years = ['2020', '2021', '2022', '2023', '2024']
 data = load_data(ticker, years)
 

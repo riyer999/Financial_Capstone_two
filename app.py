@@ -98,32 +98,47 @@ def generate_sankey(company, selected_year, company_dataframe):
                               '#CB7E98', '#A4E804', '#324E72', '#6A3A4C'
                               ]
 
+                # Define labels
+                label = [
+                    'Revenue',
+                    'Gross Profit',
+                    'Cost of Revenues',
+                    'Operating Profit',
+                    'Operating Expenses',
+                    'Net Profit',
+                    'Tax',
+                    'Other',
+                    'SG&A',
+                    'Other Expenses',
+                    'R&D'
+                ]
 
-                label = ['Revenue',  # this one is fine
-                         'Gross Profit',  # this one is also fine
-                         'Cost of Revenues',
-                         'Operating Profit',
-                         'Operating Expenses',
-                         'Net Profit',
-                         'Tax',
-                         'Other',
-                         'SG&A',
-                         'Other Expenses',
-                         'R&D' #new entry
-                         ]
-
-                color_for_nodes = ['steelblue', 'green', 'red', 'green', 'red', 'green', 'red', 'red',
-                                   'red', 'red', 'red']
-
-                color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed',
-                                   'lightgreen',
+                # Default colors (Green for profit, Red for expenses/loss)
+                color_for_nodes = ['steelblue', 'green', 'red', 'green', 'red', 'green', 'red', 'red', 'red', 'red',
+                                   'red']
+                color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed', 'lightgreen',
                                    'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
 
                 # Data
                 source = [0, 0, 1, 1, 3, 3, 3, 4, 4, 4]
                 target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-                value = [gross_profit_value, cost_revenue, operating_income, operating_expense, net_income,
-                         tax_provision, other, sga, other_operating_expenses, rnd]
+                value = [
+                    gross_profit_value, cost_revenue, operating_income, operating_expense,
+                    net_income, tax_provision, other, sga, other_operating_expenses, rnd
+                ]
+
+                # Adjust colors based on negative values
+                if gross_profit_value < 0:
+                    color_for_nodes[1] = 'red'  # Gross Profit node turns red
+                    color_for_links[0] = 'red'  # Link from Revenue to Gross Profit turns red
+
+                if operating_income < 0:
+                    color_for_nodes[3] = 'red'  # Operating Profit node turns red
+                    color_for_links[2] = 'red'  # Link from Gross Profit to Operating Profit turns red
+
+                if net_income < 0:
+                    color_for_nodes[5] = 'red'  # Net Profit node turns red
+                    color_for_links[4] = 'red'  # Link from Operating Profit to Net Profit turns red
 
                 value = [
                     v if v > 0 else 1e-6  # If v is 0, set it to 1e-6
@@ -385,7 +400,7 @@ def generate_balance_visual(company, selected_year, company_dataframe):
 
         # Update hover labels using hovertemplate
         balance_fig.update_traces(
-            maxdepth=3,  # Adjust depth to include all levels
+            maxdepth=4,  # Adjust depth to include all levels
             hovertemplate='<b>%{label}</b><br>%{value} Billion<extra></extra>',
             textfont=dict(size=23)  # Adjust the font size
         )
@@ -594,7 +609,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
             variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
             try:
                 value = income_statement.loc[key, year]
-                variable_names[variable_name] = abs(income_statement.loc[key, year].item())
+                variable_names[variable_name] = (income_statement.loc[key, year].item())
 
                 # Calculate Pretax Income per Share only for the 'Pretax Income' key
                 if key == 'Pretax Income' and outstanding_shares:
