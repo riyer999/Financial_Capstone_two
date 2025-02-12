@@ -976,11 +976,11 @@ def update_url_and_treemap(click_data, search_value, _):
      Output('sidebar', 'style')],  # Control sidebar visibility
     [Input('url', 'pathname'), Input('compare-button', 'value')]
 )
-
 def display_page(pathname, compare_value):
     if compare_value == 2 or pathname == '/compare':
         # Compare page layout and hide sidebar
         return compare_page_layout, {'display': 'none'}
+
     elif pathname.startswith('/item/'):
         # Company details page and hide sidebar
         return html.Div([
@@ -994,37 +994,39 @@ def display_page(pathname, compare_value):
                 value=0,  # Default value corresponds to '2020'
                 step=None
             ),
-            dcc.Graph(
-                id='company-graphic',
-                style={'height': '500px', 'width': '100%'}
-            ),
-            dcc.Graph(
-                id='company-balance-graphic',  # Added balance graphic
-                style={'height': '500px', 'width': '100%'}
-            ),
-            dcc.Graph(
-                id='company-cashflow-graphic',  # New cash flow visualization
-                style={'height': '500px', 'width': '100%'}
-            ),
 
+            # Top two graphs
+            dbc.Row([
+                dbc.Col(dcc.Graph(id='company-graphic', style={'height': '500px', 'width': '100%'}), width=6),
+                dbc.Col(dcc.Graph(id='company-cashflow-graphic', style={'height': '500px', 'width': '100%'}), width=6)
+            ], style={'width': '100%'}),
+
+            # Bottom graph
+            dbc.Row([
+                dbc.Col(dcc.Graph(id='company-balance-graphic', style={'height': '500px', 'width': '100%'}), width=6)
+            ]),
+
+            # Back Button
             html.A(
                 html.Button("Back to Treemap", id="back-button", style={
-                    'position': 'fixed',  # Position the button relative to the viewport
-                    'bottom': '10px',  # Distance from the bottom edge
-                    'left': '10px',  # Distance from the left edge
-                    'zIndex': '1000',  # Ensure it appears above other elements
-                    'backgroundColor': '#007bff',  # Optional: button color
-                    'color': 'white',  # Optional: text color
-                    'padding': '10px 20px',  # Optional: button padding
-                    'border': 'none',  # Optional: button border
-                    'borderRadius': '5px',  # Optional: rounded corners
-                    'cursor': 'pointer'  # Optional: pointer cursor on hover
+                    'position': 'fixed',
+                    'bottom': '10px',
+                    'left': '10px',
+                    'zIndex': '1000',
+                    'backgroundColor': '#007bff',
+                    'color': 'white',
+                    'padding': '10px 20px',
+                    'border': 'none',
+                    'borderRadius': '5px',
+                    'cursor': 'pointer'
                 }),
                 href="/"  # URL to navigate back to the root page
             )
-        ]), {'display': 'none'}
+        ], style={'width': '200%'}), {'display': 'none'}
+
     # Default to main page with sidebar
     return main_page_layout, {'width': 340, 'margin-left': 35, 'margin-top': 35}
+
 
 # all code for the main page
 @app.callback(
