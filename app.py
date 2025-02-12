@@ -651,7 +651,18 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
         for key in balance_sheet_keys:
             variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
             try:
-                variable_names[variable_name] = abs(balance_sheet.loc[key, year].item())
+                value = balance_sheet.loc[key, year]
+                if not value.empty:
+                    print(f"Checking value for {key} in {year}: {value}")
+
+                    # Only attempt to access the first element if the value is not empty
+                    variable_names[variable_name] = abs(value.iloc[0])  # or any logic you need
+                else:
+                    # Handle the case where the value is empty
+                    # For example, set a default value or log the issue
+                    variable_names[variable_name] = 0  # or whatever logic you prefer
+
+
             except KeyError:
                 variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
