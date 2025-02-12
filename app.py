@@ -1003,7 +1003,7 @@ def display_page(pathname, compare_value):
 
             # Bottom graph
             dbc.Row([
-                dbc.Col(dcc.Graph(id='company-balance-graphic', style={'height': '500px', 'width': '100%'}), width=6)
+                dbc.Col(dcc.Graph(id='company-balance-graphic', style={'height': '500px', 'width': '98.6%'}), width=6)
             ]),
 
             # Back Button
