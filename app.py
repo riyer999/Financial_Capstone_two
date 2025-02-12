@@ -653,7 +653,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
             try:
                 value = balance_sheet.loc[key, year]
                 if not value.empty:
-                    print(f"Checking value for {key} in {year}: {value}")
+                    #print(f"Checking value for {key} in {year}: {value}")
 
                     # Only attempt to access the first element if the value is not empty
                     variable_names[variable_name] = abs(value.iloc[0])  # or any logic you need
