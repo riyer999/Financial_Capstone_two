@@ -1,6 +1,7 @@
 import yfinance as yf
 import pandas as pd
 import os
+import numpy as np
 from dash import Dash, dash, dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
@@ -407,11 +408,11 @@ def generate_balance_visual(company, selected_year, company_dataframe):
         #balance_fig.show()
         return balance_fig
 
+
 def generate_cashflow_visual(company, selected_year, company_dataframe):
     if (company and selected_year) or (company and company.startswith('/item/')):
         # Determine the correct company name
         company_name = company.split('/')[-1] if company.startswith('/item/') else company
-        #print(f"Displaying details for {company_name}")  # Debugging
 
         # Normalize company name to match entries in DataFrame
         company_name_normalized = company_name.strip().lower()
@@ -420,39 +421,55 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
         # Get the ticker corresponding to the company
         matched_tickers = company_dataframe[company_dataframe['Normalized_Company'] == company_name_normalized][
             'Ticker']
-        #print(f"Matched tickers: {matched_tickers}")  # Debugging
 
     if not matched_tickers.empty:
         ticker = matched_tickers.values[0]
-        #print(f"Selected ticker: {ticker}")
-        financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
 
-        # Prepare DataFrame for Plotly
-        plot_data = []
-        max_value = 0  # Initialize the max value tracker
+        # Load only relevant cash flow statement data
+        financial_metrics_all_years = load_data(ticker, years=['2020', '2021', '2022', '2023',
+                                                               '2024'])  # Load data for all years
 
+        # Extract only the cash flow statement-related keys
+        cash_flow_keys = [
+            'Operating_Cash_Flow', 'Issuance_Of_Debt', 'Capital_Expenditure',
+            'Repayment_Of_Debt', 'Repurchase_Of_Capital_Stock', 'Cash_Dividends_Paid'
+        ]
+
+        # Initialize max_value for scaling the y-axis
+        max_value = 0
+
+        # Loop through the relevant keys and years to calculate the maximum value
+        for year in ['2020', '2021', '2022', '2023', '2024']:
+            for key in cash_flow_keys:
+                # Build the key for the specific year (e.g., 'Operating_Cash_Flow_2024')
+                year_key = f'{key}_{year}'
+
+                # Check if the key exists and update max_value
+                if year_key in financial_metrics_all_years:
+                    max_value = max(max_value, financial_metrics_all_years[year_key])
+
+        # Prepare data for the selected year
         year_data = {
             'Year': selected_year,
             'Category1': ['Operating Cash Flow', 'Issuance Of Debt'],
             'Value1': [
-                financial_metrics.get(f'Operating_Cash_Flow_{selected_year}', 0),
-                financial_metrics.get(f'Issuance_Of_Debt_{selected_year}', 0)
+                financial_metrics_all_years.get(f'Operating_Cash_Flow_{selected_year}', 0),
+                financial_metrics_all_years.get(f'Issuance_Of_Debt_{selected_year}', 0)
             ],
-            'Category2': ['Capital Expenditure', 'Repayment Of Debt', 'Repurchase Of Capital Stock', 'Cash Dividends Paid'],
+            'Category2': ['Capital Expenditure', 'Repayment Of Debt', 'Repurchase Of Capital Stock',
+                          'Cash Dividends Paid'],
             'Value2': [
-                financial_metrics.get(f'Capital_Expenditure_{selected_year}', 0),
-                financial_metrics.get(f'Repayment_Of_Debt_{selected_year}', 0),
-                financial_metrics.get(f'Repurchase_Of_Capital_Stock_{selected_year}', 0),
-                financial_metrics.get(f'Cash_Dividends_Paid_{selected_year}', 0)
+                financial_metrics_all_years.get(f'Capital_Expenditure_{selected_year}', 0),
+                financial_metrics_all_years.get(f'Repayment_Of_Debt_{selected_year}', 0),
+                financial_metrics_all_years.get(f'Repurchase_Of_Capital_Stock_{selected_year}', 0),
+                financial_metrics_all_years.get(f'Cash_Dividends_Paid_{selected_year}', 0)
             ]
         }
-        plot_data.append(year_data)
-        max_value = max(max_value, *year_data['Value1'], *year_data['Value2'])
 
         # Create subplots
         cash_fig = make_subplots(rows=1, cols=2, subplot_titles=("Money In", "Money Out"))
 
-        # Add traces
+        # Add traces for money in and money out
         cash_fig.add_trace(go.Bar(
             x=year_data['Category1'],
             y=year_data['Value1'],
@@ -467,7 +484,7 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
             marker=dict(color='red')
         ), row=1, col=2)
 
-        # Update layout
+        # Update layout to set static y-axis range
         cash_fig.update_layout(
             title_text=f"Cash Flow for {ticker}",
             xaxis_title="",
@@ -480,14 +497,11 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
                 ticktext=['Operating Cash Flow', 'Issuance Of Debt', 'Capital Expenditure', 'Repayment Of Debt',
                           'Repurchase Of Capital Stock']
             ),
-            yaxis=dict(range=[0, max_value * 1.1]),
-            yaxis2=dict(range=[0, max_value * 1.1])
+            yaxis=dict(range=[0, max_value * 1.1]),  # Static y-axis range across all years
+            yaxis2=dict(range=[0, max_value * 1.1])  # Same for the second y-axis
         )
 
-        # Show plot
-       # cash_fig.show()
         return cash_fig
-
 
 
 def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
@@ -603,14 +617,31 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
             variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
             try:
                 value = income_statement.loc[key, year]
-                variable_names[variable_name] = (income_statement.loc[key, year].item())
+
+                # Check if it's a valid scalar value or Series
+                if isinstance(value, (np.ndarray, pd.Series)) and value.size == 1:
+                    # If it's a single value, safely get it using .item()
+                    variable_names[variable_name] = value.item() if pd.notna(value.item()) else 0
+                else:
+                    # If it's a Series or other non-scalar, handle it safely
+                    if pd.notna(value).all():  # Check if all values are non-NaN
+                        variable_names[variable_name] = value
+                    else:
+                        variable_names[variable_name] = 0  # Set to 0 if there's any missing data
 
                 # Calculate Pretax Income per Share only for the 'Pretax Income' key
                 if key == 'Pretax Income' and outstanding_shares:
                     pretax_per_share = value / outstanding_shares
                     market_cap_calc = pretax_per_share * outstanding_shares
                     Equity_Bond = (pretax_per_share / current_price) * 100
-                    print(f"Equity Bond for {ticker} {year}: {Equity_Bond.item()}%")
+                    if isinstance(Equity_Bond, (np.ndarray, pd.Series)):
+                        if Equity_Bond.size == 1:
+                            print(f"Equity Bond for {ticker} {year}: {Equity_Bond.item()}%")
+                        else:
+                            print(f"Equity Bond for {ticker} {year}: Multiple values or missing data")
+                    else:
+                        print(f"Equity Bond for {ticker} {year}: {Equity_Bond}%")
+
 
 
             except KeyError:
