@@ -18,6 +18,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
         'Capital Expenditure',
         'Repayment Of Debt',
         'Repurchase Of Capital Stock',
+        'Cash Dividends Paid'
     }
 
     variable_names = {}
@@ -46,7 +47,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
 
 
 # Load actual data
-ticker = "MAR"
+ticker = "JPM"
 years = ['2020', '2021', '2022', '2023', '2024']
 data = load_data(ticker, years)
 
@@ -60,11 +61,12 @@ for year in years:
         'Year': year,
         'Category1': ['Operating Cash Flow', 'Issuance Of Debt'],
         'Value1': [data.get(f'Operating_Cash_Flow_{year}', 0), data.get(f'Issuance_Of_Debt_{year}', 0)],
-        'Category2': ['Capital Expenditure', 'Repayment Of Debt', 'Repurchase Of Capital Stock'],
+        'Category2': ['Capital Expenditure', 'Repayment Of Debt', 'Repurchase Of Capital Stock', 'Cash Dividends Paid'],
         'Value2': [
             data.get(f'Capital_Expenditure_{year}', 0),
             data.get(f'Repayment_Of_Debt_{year}', 0),
-            data.get(f'Repurchase_Of_Capital_Stock_{year}', 0)
+            data.get(f'Repurchase_Of_Capital_Stock_{year}', 0),
+            data.get(f'Cash_Dividends_Paid_{year}', 0)  # <-- Added Cash Dividends Paid
         ]
     }
     plot_data.append(year_data)

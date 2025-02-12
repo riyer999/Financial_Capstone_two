@@ -445,11 +445,12 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
                 financial_metrics.get(f'Operating_Cash_Flow_{selected_year}', 0),
                 financial_metrics.get(f'Issuance_Of_Debt_{selected_year}', 0)
             ],
-            'Category2': ['Capital Expenditure', 'Repayment Of Debt', 'Repurchase Of Capital Stock'],
+            'Category2': ['Capital Expenditure', 'Repayment Of Debt', 'Repurchase Of Capital Stock', 'Cash Dividends Paid'],
             'Value2': [
                 financial_metrics.get(f'Capital_Expenditure_{selected_year}', 0),
                 financial_metrics.get(f'Repayment_Of_Debt_{selected_year}', 0),
-                financial_metrics.get(f'Repurchase_Of_Capital_Stock_{selected_year}', 0)
+                financial_metrics.get(f'Repurchase_Of_Capital_Stock_{selected_year}', 0),
+                financial_metrics.get(f'Cash_Dividends_Paid_{selected_year}', 0)
             ]
         }
         plot_data.append(year_data)
@@ -600,6 +601,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
         'Capital Expenditure',
         'Repayment Of Debt',
         'Repurchase Of Capital Stock',
+        'Cash Dividends Paid'
     }
 
     variable_names = {}
