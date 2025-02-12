@@ -19,7 +19,7 @@ def generate_sankey(company, selected_year, company_dataframe):
     if (company and selected_year) or (company and company.startswith('/item/')):
         # Determine the correct company name
         company_name = company.split('/')[-1] if company.startswith('/item/') else company
-        #print(f"Displaying details for {company_name}")  # Debugging
+
 
         # Normalize company name to match entries in your DataFrame
         company_name_normalized = company_name.strip().lower()
@@ -30,14 +30,11 @@ def generate_sankey(company, selected_year, company_dataframe):
         # Get the ticker corresponding to the company
         matched_tickers = company_dataframe[company_dataframe['Normalized_Company'] == company_name_normalized][
             'Ticker']
-        #print(f"Matched tickers: {matched_tickers}")  # Debugging
 
         if not matched_tickers.empty:
             ticker = matched_tickers.values[0]
-            print(f"Selected ticker: {ticker}")  # Debugging
             # Load financial data for the selected company
             financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
-            #print(financial_metrics.keys())
             if financial_metrics:
 
                 # Extract the financial metrics you need
@@ -147,7 +144,6 @@ def generate_sankey(company, selected_year, company_dataframe):
                         net_income, tax_provision, other, sga, other_operating_expenses, rnd
                     ]
                 ]
-                #print(f"this is the value of gross profit: {gross_profit_value}")
 
 
 
@@ -262,7 +258,6 @@ def generate_balance_visual(company, selected_year, company_dataframe):
     if (company and selected_year) or (company and company.startswith('/item/')):
         # Determine the correct company name
         company_name = company.split('/')[-1] if company.startswith('/item/') else company
-        #print(f"Displaying details for {company_name}")  # Debugging
 
         # Normalize company name to match entries in your DataFrame
         company_name_normalized = company_name.strip().lower()
@@ -273,11 +268,9 @@ def generate_balance_visual(company, selected_year, company_dataframe):
         # Get the ticker corresponding to the company
         matched_tickers = company_dataframe[company_dataframe['Normalized_Company'] == company_name_normalized][
             'Ticker']
-        #print(f"Matched tickers: {matched_tickers}")  # Debugging
 
     if not matched_tickers.empty:
         ticker = matched_tickers.values[0]
-        #print(f"Selected ticker: {ticker}")
         financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
 
         # Replace this with actual financial metrics from `financial_data`
@@ -496,6 +489,7 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
         return cash_fig
 
 
+
 def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
     # Fetch the data dynamically using yfinance
     ystock = yf.Ticker(ticker)
@@ -508,9 +502,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
     # Fetch the stock's information (including shares outstanding)
     stock_info = ystock.info
     outstanding_shares = stock_info.get('sharesOutstanding')
-    print(f"Outstanding Shares: {outstanding_shares}")
     current_price = stock_info.get('currentPrice')
-    print(f"Current Stock Price: ${current_price}")
 
     # List of keys to extract from the income statement
     income_statement_keys = [
@@ -615,11 +607,8 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
 
                 # Calculate Pretax Income per Share only for the 'Pretax Income' key
                 if key == 'Pretax Income' and outstanding_shares:
-                    print(f"Pretax Income for {ticker} {year}: {value}")  # Print Pretax Income
                     pretax_per_share = value / outstanding_shares
                     market_cap_calc = pretax_per_share * outstanding_shares
-                    print(f"Market Cap for {ticker}: {market_cap_calc}")
-                    print(f"Pretax Income per Share for {ticker} {year}: {pretax_per_share}")
                     Equity_Bond = (pretax_per_share / current_price) * 100
                     print(f"Equity Bond for {ticker} {year}: {Equity_Bond.item()}%")
 
