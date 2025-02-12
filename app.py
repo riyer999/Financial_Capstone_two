@@ -39,18 +39,24 @@ def generate_sankey(company, selected_year, company_dataframe):
             if financial_metrics:
 
                 # Extract the financial metrics you need
-                total_revenue = financial_metrics[f'Total_Revenue_{selected_year}'] / 1e9
-                gross_profit_value = financial_metrics[f'Gross_Profit_{selected_year}'] / 1e9
-                cost_revenue = financial_metrics[f'Cost_Of_Revenue_{selected_year}'] / 1e9
-                operating_income = financial_metrics[f'Operating_Income_{selected_year}'] / 1e9
-                operating_expense = financial_metrics[f'Operating_Expense_{selected_year}'] / 1e9
-                tax_provision = financial_metrics[f'Tax_Provision_{selected_year}'] / 1e9
-                rnd = financial_metrics[f'Research_And_Development_{selected_year}'] / 1e9
-                sga = financial_metrics[f'Selling_General_And_Administration_{selected_year}'] / 1e9
-                other = financial_metrics[f'Other_Income_Expense_{selected_year}'] / 1e9
-                net_income = financial_metrics[f'Net_Income_{selected_year}'] / 1e9
-                ga = financial_metrics[f'General_And_Administrative_Expense_{selected_year}'] / 1e9
-                other_operating_expenses = financial_metrics[f'Other_Operating_Expenses_{selected_year}'] / 1e9
+                if financial_metrics[f'Total_Revenue_{selected_year}'] < 10e6:  # Less than 10 million
+                    scale_factor = 1e6  # Scale to millions
+                else:
+                    scale_factor = 1e9  # Scale to billions
+
+                total_revenue = financial_metrics[f'Total_Revenue_{selected_year}'] / scale_factor
+                gross_profit_value = financial_metrics[f'Gross_Profit_{selected_year}'] / scale_factor
+                cost_revenue = financial_metrics[f'Cost_Of_Revenue_{selected_year}'] / scale_factor
+                operating_income = financial_metrics[f'Operating_Income_{selected_year}'] / scale_factor
+                operating_expense = financial_metrics[f'Operating_Expense_{selected_year}'] / scale_factor
+                tax_provision = financial_metrics[f'Tax_Provision_{selected_year}'] / scale_factor
+                rnd = financial_metrics[f'Research_And_Development_{selected_year}'] / scale_factor
+                sga = financial_metrics[f'Selling_General_And_Administration_{selected_year}'] / scale_factor
+                other = financial_metrics[f'Other_Income_Expense_{selected_year}'] / scale_factor
+                net_income = financial_metrics[f'Net_Income_{selected_year}'] / scale_factor
+                ga = financial_metrics[f'General_And_Administrative_Expense_{selected_year}'] / scale_factor
+                other_operating_expenses = financial_metrics[f'Other_Operating_Expenses_{selected_year}'] / scale_factor
+
                 ###################################################
 
                 # initialize market cap bar
@@ -176,22 +182,20 @@ def generate_sankey(company, selected_year, company_dataframe):
                 rnd_margin_percentage = safe_divide(rnd, gross_profit_value)
 
                 # Add custom hover labels for nodes
-                custom_hover_data = [
-                    f"Total Revenue: {total_revenue:.2f}B",  # Revenue node (no custom data needed)
-                    f"Gross Profit: {gross_profit_value:.2f}B<br>Percentage of Revenue: {gross_margin_percentage:.2f}%",
-                    f"Cost of Revenue: {cost_revenue:.2f}B<br>Percentage of Revenue: {cost_revenue_margin:.2f}%",
-                    # Cost of Revenues
-                    f"Operating Profit: {operating_income:.2f}B<br>Percentage of Revenue: {operating_profit_margin:.2f}%",
-                    # Operating Profit
-                    f"Operating Expenses: {operating_expense:.2f}B<br>Percentage of Revenue: {operating_expenses_margin:.2f}%",
-                    # Operating Expenses
-                    f"Net Profit: {net_income:.2f}B<br>Percentage of Revenue: {net_profit_margin:.2f}%",  # Net Profit
-                    f"Tax: {tax_provision:.2f}B<br>Percentage of Revenue: {tax_provision_margin:.2f}%",  # Tax
-                    "",  # Other
-                    f"SG&A: {sga:.2f}B<br>Percentage of Gross Profit: {sga_margin_percentage:.2f}%",
-                    "",  # Other Expenses
-                    f"R&D: {rnd:.2f}B<br>Percentage of Gross Profit: {rnd_margin_percentage:.2f}%"
+                unit = "M" if scale_factor == 1e6 else "B"
 
+                custom_hover_data = [
+                    f"Total Revenue: {total_revenue:.2f}{unit}",
+                    f"Gross Profit: {gross_profit_value:.2f}{unit}<br>Percentage of Revenue: {gross_margin_percentage:.2f}%",
+                    f"Cost of Revenue: {cost_revenue:.2f}{unit}<br>Percentage of Revenue: {cost_revenue_margin:.2f}%",
+                    f"Operating Profit: {operating_income:.2f}{unit}<br>Percentage of Revenue: {operating_profit_margin:.2f}%",
+                    f"Operating Expenses: {operating_expense:.2f}{unit}<br>Percentage of Revenue: {operating_expenses_margin:.2f}%",
+                    f"Net Profit: {net_income:.2f}{unit}<br>Percentage of Revenue: {net_profit_margin:.2f}%",
+                    f"Tax: {tax_provision:.2f}{unit}<br>Percentage of Revenue: {tax_provision_margin:.2f}%",
+                    "",  # Other
+                    f"SG&A: {sga:.2f}{unit}<br>Percentage of Gross Profit: {sga_margin_percentage:.2f}%",
+                    "",  # Other Expenses
+                    f"R&D: {rnd:.2f}{unit}<br>Percentage of Gross Profit: {rnd_margin_percentage:.2f}%"
                 ]
 
                 sankey_fig = go.Figure(data=[go.Sankey(
