@@ -46,7 +46,12 @@ def generate_sankey(company, selected_year, company_dataframe):
 
                 total_revenue = financial_metrics[f'Total_Revenue_{selected_year}'] / scale_factor
                 gross_profit_value = financial_metrics[f'Gross_Profit_{selected_year}'] / scale_factor
-                cost_revenue = financial_metrics[f'Cost_Of_Revenue_{selected_year}'] / scale_factor
+                cost_revenue = financial_metrics.get(f'Cost_Of_Revenue_{selected_year}', 0) / scale_factor
+                print(cost_revenue)
+                if cost_revenue == 0:
+                    cost_revenue = financial_metrics.get(f'Total_Expenses_{selected_year}', 0) / scale_factor
+                print(cost_revenue)
+
                 operating_income = financial_metrics[f'Operating_Income_{selected_year}'] / scale_factor
                 operating_expense = financial_metrics[f'Operating_Expense_{selected_year}'] / scale_factor
                 tax_provision = financial_metrics[f'Tax_Provision_{selected_year}'] / scale_factor
@@ -56,6 +61,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                 net_income = financial_metrics[f'Net_Income_{selected_year}'] / scale_factor
                 ga = financial_metrics[f'General_And_Administrative_Expense_{selected_year}'] / scale_factor
                 other_operating_expenses = financial_metrics[f'Other_Operating_Expenses_{selected_year}'] / scale_factor
+                depreciation_amortization_depletion = financial_metrics[f'Depreciation_Amortization_Depletion_Income_Statement_{selected_year}'] / scale_factor
 
                 ###################################################
 
@@ -114,21 +120,23 @@ def generate_sankey(company, selected_year, company_dataframe):
                     'Other',
                     'SG&A',
                     'Other Expenses',
-                    'R&D'
+                    'R&D',
+                    'Depreciation Amortization Depletion'
                 ]
 
                 # Default colors (Green for profit, Red for expenses/loss)
                 color_for_nodes = ['steelblue', 'green', 'red', 'green', 'red', 'green', 'red', 'red', 'red', 'red',
-                                   'red']
+                                   'red', 'red']
                 color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed', 'lightgreen',
-                                   'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
+                                   'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
 
                 # Data
-                source = [0, 0, 1, 1, 3, 3, 3, 4, 4, 4]
-                target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                source = [0, 0, 1, 1, 3, 3, 3, 4, 4, 4, 4]
+                target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
                 value = [
                     gross_profit_value, cost_revenue, operating_income, operating_expense,
-                    net_income, tax_provision, other, sga, other_operating_expenses, rnd
+                    net_income, tax_provision, other, sga, other_operating_expenses, rnd,
+                    depreciation_amortization_depletion
                 ]
 
                 # Adjust colors based on negative values
@@ -148,7 +156,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                     v if v > 0 else 1e-6  # If v is 0, set it to 1e-6
                     for v in [
                         gross_profit_value, cost_revenue, operating_income, operating_expense,
-                        net_income, tax_provision, other, sga, other_operating_expenses, rnd
+                        net_income, tax_provision, other, sga, other_operating_expenses, rnd, depreciation_amortization_depletion
                     ]
                 ]
 
@@ -160,9 +168,9 @@ def generate_sankey(company, selected_year, company_dataframe):
 
                 # Coordinates for nodes
                 x = [0.1, 0.35, 0.35, 0.6,
-                     0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
+                     0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
                 y = [0.40, 0.25, 0.70, 0.1,
-                     0.45, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75]
+                     0.45, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75, 0.90]
                 x = [.001 if v == 0 else .999 if v == 1 else v for v in x]
                 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]
 
@@ -180,28 +188,36 @@ def generate_sankey(company, selected_year, company_dataframe):
                 operating_expenses_margin = safe_divide(operating_expense, total_revenue)
                 tax_provision_margin = safe_divide(tax_provision, total_revenue)
                 rnd_margin_percentage = safe_divide(rnd, gross_profit_value)
+                depreciation_amortization_depletion_margin_percentage = safe_divide(depreciation_amortization_depletion, gross_profit_value)
+                other_operating_expenses_percentage = safe_divide(other_operating_expenses, gross_profit_value)
 
                 # Add custom hover labels for nodes
                 unit = "M" if scale_factor == 1e6 else "B"
 
+
                 custom_hover_data = [
-                    f"Total Revenue: {total_revenue:.2f}{unit}",
-                    f"Gross Profit: {gross_profit_value:.2f}{unit}<br>Percentage of Revenue: {gross_margin_percentage:.2f}%",
-                    f"Cost of Revenue: {cost_revenue:.2f}{unit}<br>Percentage of Revenue: {cost_revenue_margin:.2f}%",
-                    f"Operating Profit: {operating_income:.2f}{unit}<br>Percentage of Revenue: {operating_profit_margin:.2f}%",
-                    f"Operating Expenses: {operating_expense:.2f}{unit}<br>Percentage of Revenue: {operating_expenses_margin:.2f}%",
-                    f"Net Profit: {net_income:.2f}{unit}<br>Percentage of Revenue: {net_profit_margin:.2f}%",
-                    f"Tax: {tax_provision:.2f}{unit}<br>Percentage of Revenue: {tax_provision_margin:.2f}%",
+                    f"Total Revenue: {total_revenue:.2f}B",  # Revenue node (no custom data needed)
+                    f"Gross Profit: {gross_profit_value:.2f}B<br>Percentage of Revenue: {gross_margin_percentage:.2f}%",
+                    f"Cost of Revenue: {cost_revenue:.2f}B<br>Percentage of Revenue: {cost_revenue_margin:.2f}%",
+                    # Cost of Revenues
+                    f"Operating Profit: {operating_income:.2f}B<br>Percentage of Revenue: {operating_profit_margin:.2f}%",
+                    # Operating Profit
+                    f"Operating Expenses: {operating_expense:.2f}B<br>Percentage of Revenue: {operating_expenses_margin:.2f}%",
+                    # Operating Expenses
+                    f"Net Profit: {net_income:.2f}B<br>Percentage of Revenue: {net_profit_margin:.2f}%",  # Net Profit
+                    f"Tax: {tax_provision:.2f}B<br>Percentage of Revenue: {tax_provision_margin:.2f}%",  # Tax
                     "",  # Other
-                    f"SG&A: {sga:.2f}{unit}<br>Percentage of Gross Profit: {sga_margin_percentage:.2f}%",
-                    "",  # Other Expenses
-                    f"R&D: {rnd:.2f}{unit}<br>Percentage of Gross Profit: {rnd_margin_percentage:.2f}%"
+                    f"SG&A: {sga:.2f}B<br>Percentage of Gross Profit: {sga_margin_percentage:.2f}%",
+                    f"Other Expenses: {other_operating_expenses:.2f}{unit}<br>Percentage of Gross Profit: {other_operating_expenses_percentage:.2f}%",  # Other Expenses
+                    f"R&D: {rnd:.2f}B<br>Percentage of Gross Profit: {rnd_margin_percentage:.2f}%",
+                    f"Depreciation Amortization Depletion: {depreciation_amortization_depletion:.2f}B<br>Percentage of Gross Profit: {depreciation_amortization_depletion_margin_percentage:.2f}%"
+
                 ]
 
                 sankey_fig = go.Figure(data=[go.Sankey(
                     textfont=dict(color="black", size=10),
                     node=dict(
-                        pad=8, #from 35
+                        pad= 12, #from 35
                         line=dict(color="white", width=1),
                         label=label,
                         x=x,
@@ -514,6 +530,7 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
 
     # Fetch the financial data
     income_statement = ystock.incomestmt
+
     balance_sheet = ystock.balance_sheet
     cashflow_statement = ystock.cashflow  # This fetches the cash flow statement
 
@@ -552,8 +569,10 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
         'Gross Profit',
         'Cost Of Revenue',
         'Total Revenue',
-        'Operating Revenue'
-        'Pretax Income'
+        'Operating Revenue',
+        'Pretax Income',
+        'Depreciation Amortization Depletion Income Statement',
+        'Total Expenses'
     ]
 
     balance_sheet_keys = [

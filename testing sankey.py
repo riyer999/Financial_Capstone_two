@@ -24,6 +24,10 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
 
     # Fetch the financial data
     income_statement = ystock.incomestmt
+    pd.set_option('display.max_rows', None)  # Show all rows
+    pd.set_option('display.max_columns', None)  # Show all columns
+    pd.set_option('display.width', None)  # Adjust display width
+    pd.set_option('display.max_colwidth', None)  # Show full content of each cell
     print(income_statement)
     balance_sheet = ystock.balance_sheet
     cashflow_statement = ystock.cashflow  # This fetches the cash flow statement
@@ -66,65 +70,11 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
         'Cost Of Revenue',
         'Total Revenue',
         'Operating Revenue'
-        'Pretax Income'
+        'Pretax Income',
+        'Depreciation Amortization Depletion Income Statement'
     ]
 
-    balance_sheet_keys = [
-        'Total Assets',
-        'Current Assets',
-        'Cash Cash Equivalents And Short Term Investments',
-        'Cash And Cash Equivalents',
-        'Other Short Term Investments',
-        'Receivables',
-        'Inventory',
-        'Raw Materials',
-        'Finished Goods',
-        'Other Inventories',
-        'Prepaid Assets',
-        'Other Current Assets',
-        #
-        'Total Non Current Assets',
-        'Net PPE',
-        'Goodwill And Other Intangible Assets',
-        'Goodwill',
-        'Other Intangible Assets',
-        'Investments And Advances',
-        'Long Term Equity Investment',
-        'Other Investments',
-        'Non Current Accounts Receivable',
-        'Non Current Note Receivables',
-        'Non Current Deferred Assets',
-        'Defined Pension Benefit',
-        'Other Non Current Assets',
-        #
-        'Total Liabilities Net Minority Interest',
-        'Current Liabilities',
-        'Payables And Accrued Expenses',
-        'Pensionand Other Post Retirement Benefit Plans ...',
-        'Current Debt And Capital Lease Obligation',
-        'Other Current Liabilities',
-        'Total Non Current Liabilities Net Minority Interest',
-        'Long Term Debt And Capital Lease Obligation',
-        'Non Current Deferred Liabilities',
-        'Other Non Current Liabilities',
-        #
-        'Total Equity Gross Minority Interest',
-        #
-        'Stockholders Equity',
-        'Capital Stock',
-        'Additional Paid in Capital',
-        'Retained Earnings',
-        'Treasury Stock',
-        'Gains Losses Not Affecting Retained Earnings',
-        'Minority Interest',
-    ]
-    cashflow_statement_keys = {
-        'Operating Cash Flow',
-        'Issuance Of Debt',
-        'Capital Expenditure',
-        'Repayment Of Debt',
-        'Repurchase Of Capital Stock',
-    }
+
 
     variable_names = {}
     # loop through the years and each key for the income statement
@@ -149,31 +99,6 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
             except KeyError:
                 variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
-        # loop through the years and each key for the balance sheet
-        for key in balance_sheet_keys:
-            variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
-            try:
-                variable_names[variable_name] = abs(balance_sheet.loc[key, year].item())
-            except KeyError:
-                variable_names[variable_name] = 0  # Return 0 if key doesn't exist
-
-        for key in cashflow_statement_keys:
-            variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
-            try:
-                value = cashflow_statement.loc[key, year]
-
-                # Check if the value exists (it should not be empty or NaN)
-                if isinstance(value, pd.Series):
-                    if not value.empty:
-                        variable_names[variable_name] = abs(value.values[0])  # Use .values[0] to get the scalar
-                    else:
-                        variable_names[variable_name] = 0  # Default to 0 if the value is empty
-                elif pd.notna(value):  # Handle the case where it's not NaN
-                    variable_names[variable_name] = abs(value)  # It's already a scalar
-                else:
-                    variable_names[variable_name] = 0  # Default to 0 if NaN or empty
-            except KeyError:
-                variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
     return variable_names  # Return the dictionary with variable names and values
 
@@ -211,6 +136,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                 operating_expense = financial_metrics[f'Operating_Expense_{selected_year}'] / 1e9
                 tax_provision = financial_metrics[f'Tax_Provision_{selected_year}'] / 1e9
                 rnd = financial_metrics[f'Research_And_Development_{selected_year}'] / 1e9
+                depreciation_amortization_depletion = financial_metrics[f'Depreciation_Amortization_Depletion_Income_Statement_{selected_year}'] / 1e9
                 sga = financial_metrics[f'Selling_General_And_Administration_{selected_year}'] / 1e9
                 other = financial_metrics[f'Other_Income_Expense_{selected_year}'] / 1e9
                 net_income = financial_metrics[f'Net_Income_{selected_year}'] / 1e9
@@ -272,31 +198,32 @@ def generate_sankey(company, selected_year, company_dataframe):
                          'Other',
                          'SG&A',
                          'Other Expenses',
-                         'R&D' #new entry
+                         'R&D', #new entry
+                         'Depreciation Amortization Depletion' #new entry
                          ]
 
                 color_for_nodes = ['steelblue', 'green', 'red', 'green', 'red', 'green', 'red', 'red',
-                                   'red', 'red', 'red']
+                                   'red', 'red', 'red', 'red']
 
                 color_for_links = ['lightgreen', 'PaleVioletRed', 'lightgreen', 'PaleVioletRed',
                                    'lightgreen',
-                                   'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
+                                   'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed', 'PaleVioletRed']
 
                 # Data
-                source = [0, 0, 1, 1, 3, 3, 3, 4, 4, 4]
-                target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                source = [0, 0, 1, 1, 3, 3, 3, 4, 4, 4, 4]
+                target = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
                 value = [gross_profit_value, cost_revenue, operating_income, operating_expense, net_income,
-                         tax_provision, other, sga, other_operating_expenses, rnd]
+                         tax_provision, other, sga, other_operating_expenses, rnd, depreciation_amortization_depletion]
 
                 value = [
                     v if v > 0 else 1e-6  # If v is 0, set it to 1e-6
                     for v in [
                         gross_profit_value, cost_revenue, operating_income, operating_expense,
-                        net_income, tax_provision, other, sga, other_operating_expenses, rnd
+                        net_income, tax_provision, other, sga, other_operating_expenses, rnd, depreciation_amortization_depletion
                     ]
                 ]
-                print(f"this is the value of gross profit{gross_profit_value}")
-
+                #print(f"this is the value of gross profit{gross_profit_value}")
+                print(f"this is the value of depreciation {depreciation_amortization_depletion}")
 
 
                 link = dict(source=source, target=target, value=value, color=color_link)
@@ -305,9 +232,9 @@ def generate_sankey(company, selected_year, company_dataframe):
 
                 # Coordinates for nodes
                 x = [0.1, 0.35, 0.35, 0.6,
-                     0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
+                     0.6, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85]
                 y = [0.40, 0.25, 0.70, 0.1,
-                     0.45, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75]
+                     0.45, 0.0, 0.15, 0.30, 0.45, 0.60, 0.75, 0.90]
                 x = [.001 if v == 0 else .999 if v == 1 else v for v in x]
                 y = [.001 if v == 0 else .999 if v == 1 else v for v in y]
 
@@ -325,6 +252,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                 operating_expenses_margin = safe_divide(operating_expense, total_revenue)
                 tax_provision_margin = safe_divide(tax_provision, total_revenue)
                 rnd_margin_percentage = safe_divide(rnd, gross_profit_value)
+                depreciation_amortization_depletion_margin_percentage = safe_divide(depreciation_amortization_depletion, gross_profit_value)
 
                 # Add custom hover labels for nodes
                 custom_hover_data = [
@@ -341,7 +269,8 @@ def generate_sankey(company, selected_year, company_dataframe):
                     "",  # Other
                     f"SG&A: {sga:.2f}B<br>Percentage of Gross Profit: {sga_margin_percentage:.2f}%",
                     "",  # Other Expenses
-                    f"R&D: {rnd:.2f}B<br>Percentage of Gross Profit: {rnd_margin_percentage:.2f}%"
+                    f"R&D: {rnd:.2f}B<br>Percentage of Gross Profit: {rnd_margin_percentage:.2f}%",
+                    f"Depreciation Amortization Depletion: {depreciation_amortization_depletion:.2f}B<br>Percentage of Gross Profit: {depreciation_amortization_depletion_margin_percentage:.2f}%"
 
                 ]
 
@@ -408,8 +337,9 @@ def generate_sankey(company, selected_year, company_dataframe):
 
 
 
-generate_sankey("Apple Inc.", '2021', nasdaq_df)
+generate_sankey("Allstate", '2023', nasdaq_df)
 #Coca-Cola Company (The)
 #JPMorgan Chase
 #Apple Inc.
 #Boeing
+#Depreciation Amortization Depletion Income Stat
