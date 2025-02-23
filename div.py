@@ -1,4 +1,6 @@
 from yahooquery import Ticker
+import nltk
+from transformers import pipeline
 
 
 def get_company_summary(symbol):
@@ -9,10 +11,6 @@ def get_company_summary(symbol):
 symbol = "NVDA"  
 
 company_summary = get_company_summary(symbol)
-
-
-import nltk
-from transformers import pipeline
 
 nltk.download('punkt')
 
