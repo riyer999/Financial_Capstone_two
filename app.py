@@ -800,16 +800,18 @@ symbol = "AAPL"
 
 company_summary = get_company_summary(symbol)
 
-#nltk.download('punkt')
+nltk.download('punkt')
 
-#summarizer = pipeline("summarization", model="human-centered-summarization/financial-summarization-pegasus")
-
-#def simple_summarizer(text):
-    #summary = summarizer(text, max_length=150, min_length=10, do_sample=False)[0]['summary_text']
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+def simple_summarizer(text):
+    summary = summarizer(text, max_length=150, min_length=30, do_sample=False)[0]['summary_text']
     
-    #return summary
+    
+    
+    return summary
 
-#summary = simple_summarizer(company_summary)
+summary = simple_summarizer(company_summary)
+print(summary)
 
 # Step 1: Read the file into a DataFrame
 file_path = 'us_official_nasdaq.csv'  # Replace with the path to your file

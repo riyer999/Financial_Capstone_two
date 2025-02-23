@@ -15,10 +15,9 @@ company_summary = get_company_summary(symbol)
 
 nltk.download('punkt')
 
-summarizer = pipeline("summarization", model="human-centered-summarization/financial-summarization-pegasus")
-
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 def simple_summarizer(text):
-    summary = summarizer(text, max_length=150, min_length=10, do_sample=False)[0]['summary_text']
+    summary = summarizer(text, max_length=150, min_length=30, do_sample=False)[0]['summary_text']
     
     
     
