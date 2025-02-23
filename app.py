@@ -522,6 +522,7 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
         )
 
         return cash_fig
+    
 
 
 def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
@@ -786,6 +787,29 @@ def create_treemap():
     )
     return fig
 
+from yahooquery import Ticker
+import nltk
+from transformers import pipeline
+
+def get_company_summary(symbol):
+        stock = Ticker(symbol)
+        summary = stock.asset_profile[symbol]['longBusinessSummary']
+        return f"{summary}"
+
+symbol = "AAPL"
+
+company_summary = get_company_summary(symbol)
+
+#nltk.download('punkt')
+
+#summarizer = pipeline("summarization", model="human-centered-summarization/financial-summarization-pegasus")
+
+#def simple_summarizer(text):
+    #summary = summarizer(text, max_length=150, min_length=10, do_sample=False)[0]['summary_text']
+    
+    #return summary
+
+#summary = simple_summarizer(company_summary)
 
 # Step 1: Read the file into a DataFrame
 file_path = 'us_official_nasdaq.csv'  # Replace with the path to your file
@@ -1020,6 +1044,11 @@ def display_page(pathname, compare_value):
         return html.Div([
             html.H1(f"Details for {pathname.split('/')[-1].capitalize()}"),
             html.Br(),
+            html.Div([
+                html.H3("Company Summary"),
+                html.P(company_summary, style={'fontSize': '16px', 'color': '#333'})
+            ], style={'padding': '20px', 'border': '1px solid #ddd', 'borderRadius': '5px', 'backgroundColor': '#f9f9f9'}),
+
             dcc.Slider(
                 id='year-dropdown',
                 min=0,
