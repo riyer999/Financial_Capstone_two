@@ -1,3 +1,4 @@
+import nltk
 import yfinance as yf
 import pandas as pd
 import os
@@ -7,7 +8,8 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
-
+from transformers import pipeline
+from yahooquery import Ticker
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
     {"name": "viewport", "content": "width=device-width, initial-scale=1"}
@@ -787,31 +789,44 @@ def create_treemap():
     )
     return fig
 
-from yahooquery import Ticker
-import nltk
-from transformers import pipeline
 
-def get_company_summary(symbol):
-        stock = Ticker(symbol)
-        summary = stock.asset_profile[symbol]['longBusinessSummary']
-        return f"{summary}"
+# Assuming treemap_df and nasdaq_df exist with relevant data
+def get_company_ticker(company_name, treemap_df, nasdaq_df):
+    # Normalize company name for matching
+    company_name_normalized = company_name.strip().lower()
 
-symbol = "AAPL"
+    # Create a function to search within a DataFrame
+    def search_dataframe(df):
+        df['Normalized_Company'] = df['Company'].str.strip().str.lower()
+        matched_tickers = df[df['Normalized_Company'] == company_name_normalized]['Ticker']
+        return matched_tickers.values[0] if not matched_tickers.empty else None
 
-company_summary = get_company_summary(symbol)
+    # Check treemap_df first, then fallback to nasdaq_df
+    ticker = search_dataframe(treemap_df) or search_dataframe(nasdaq_df)
+    return ticker
 
-nltk.download('punkt')
 
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-def simple_summarizer(text):
-    summary = summarizer(text, max_length=150, min_length=30, do_sample=False)[0]['summary_text']
-    
-    
-    
+def get_company_summary(company_name, treemap_df, nasdaq_df):
+    # Get the ticker dynamically
+    ticker = get_company_ticker(company_name, treemap_df, nasdaq_df)
+    if not ticker:
+        return f"Company '{company_name}' not found."
+
+    # Fetch company summary
+    stock = Ticker(ticker)
+    summary = stock.asset_profile.get(ticker, {}).get('longBusinessSummary', 'Summary not available.')
+
     return summary
 
-summary = simple_summarizer(company_summary)
-print(summary)
+
+# Summarization setup
+nltk.download('punkt')
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+
+
+def simple_summarizer(text):
+    return summarizer(text, max_length=150, min_length=30, do_sample=False)[0]['summary_text']
+
 
 # Step 1: Read the file into a DataFrame
 file_path = 'us_official_nasdaq.csv'  # Replace with the path to your file
@@ -1042,9 +1057,18 @@ def display_page(pathname, compare_value):
         return compare_page_layout, {'display': 'none'}
 
     elif pathname.startswith('/item/'):
-        # Company details page and hide sidebar
+        # Extract the company name from the pathname
+        company_name = pathname.split('/')[-1].replace('-', ' ').capitalize()
+
+        # Get company summary dynamically
+        company_summary = get_company_summary(company_name, treemap_df, nasdaq_df)
+
+        # Summarize the company description if available
+        if "not found" not in company_summary:
+            company_summary = simple_summarizer(company_summary)
+
         return html.Div([
-            html.H1(f"Details for {pathname.split('/')[-1].capitalize()}"),
+            html.H1(f"Details for {company_name}"),
             html.Br(),
             html.Div([
                 html.H3("Company Summary"),
