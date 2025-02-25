@@ -10,6 +10,8 @@ from plotly.subplots import make_subplots
 import plotly.express as px
 from transformers import pipeline
 from yahooquery import Ticker
+from fuzzywuzzy import process
+
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
     {"name": "viewport", "content": "width=device-width, initial-scale=1"}
@@ -792,19 +794,21 @@ def create_treemap():
 
 # Assuming treemap_df and nasdaq_df exist with relevant data
 def get_company_ticker(company_name, treemap_df, nasdaq_df):
-    # Normalize company name for matching
+    # Normalize input company name
     company_name_normalized = company_name.strip().lower()
 
-    # Create a function to search within a DataFrame
+    # Function to find the best match in a DataFrame
     def search_dataframe(df):
-        df['Normalized_Company'] = df['Company'].str.strip().str.lower()
-        matched_tickers = df[df['Normalized_Company'] == company_name_normalized]['Ticker']
-        return matched_tickers.values[0] if not matched_tickers.empty else None
+        company_names = df['Company'].str.strip().str.lower().tolist()
+        best_match, score = process.extractOne(company_name_normalized, company_names)
+        if score > 85:  # Adjust threshold as needed
+            matched_ticker = df.loc[df['Company'].str.strip().str.lower() == best_match, 'Ticker']
+            return matched_ticker.values[0] if not matched_ticker.empty else None
+        return None
 
-    # Check treemap_df first, then fallback to nasdaq_df
+    # Search in treemap_df first, then fallback to nasdaq_df
     ticker = search_dataframe(treemap_df) or search_dataframe(nasdaq_df)
     return ticker
-
 
 def get_company_summary(company_name, treemap_df, nasdaq_df):
     # Get the ticker dynamically
