@@ -795,6 +795,7 @@ def create_treemap():
 # Assuming treemap_df and nasdaq_df exist with relevant data
 def get_company_ticker(company_name, treemap_df, nasdaq_df):
     # Normalize input company name
+    """
     company_name_normalized = company_name.strip().lower()
 
     # Function to find the best match in a DataFrame
@@ -810,6 +811,8 @@ def get_company_ticker(company_name, treemap_df, nasdaq_df):
     ticker = search_dataframe(treemap_df) or search_dataframe(nasdaq_df)
     return ticker
 
+    """
+    return None
 def get_company_summary(company_name, treemap_df, nasdaq_df):
     # Get the ticker dynamically
     ticker = get_company_ticker(company_name, treemap_df, nasdaq_df)
