@@ -12,7 +12,7 @@ from transformers import pipeline
 from yahooquery import Ticker
 from fuzzywuzzy import process
 
-
+print("hello world")
 app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
     {"name": "viewport", "content": "width=device-width, initial-scale=1"}
 ])
@@ -70,25 +70,25 @@ def generate_sankey(company, selected_year, company_dataframe):
                 ###################################################
 
                 # initialize market cap bar
-                bar_fig = go.Figure()
+                #bar_fig = go.Figure()
 
                 # Plot the market cap
-                categories = ['Market Cap']
-                values = [get_market_cap(ticker)]
+                #categories = ['Market Cap']
+                #values = [get_market_cap(ticker)]
 
-                bar_fig.add_trace(go.Bar(
-                    x=categories,
-                    y=values,
-                    marker_color='steelblue'
-                ))
+                #bar_fig.add_trace(go.Bar(
+                #    x=categories,
+                 #   y=values,
+                 #   marker_color='steelblue'
+                #))
 
-                bar_fig.update_layout(
-                    title='Financial Summary',
-                    xaxis_title='Categories',
-                    yaxis_title='Amount (in Billions)',
-                    barmode='group',
-                    paper_bgcolor='#F8F8FF'
-                )
+                #bar_fig.update_layout(
+                #    title='Financial Summary',
+                #    xaxis_title='Categories',
+                #    yaxis_title='Amount (in Billions)',
+                 #   barmode='group',
+                 #   paper_bgcolor='#F8F8FF'
+               # )
                 color_link = ['#000000', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',
                               '#008941', '#006FA6', '#A30059', '#FFDBE5', '#7A4900',
                               '#0000A6', '#63FFAC', '#B79762', '#004D43', '#8FB0FF',
@@ -111,21 +111,21 @@ def generate_sankey(company, selected_year, company_dataframe):
                               '#922329', '#5B4534', '#FDE8DC', '#404E55', '#0089A3',
                               '#CB7E98', '#A4E804', '#324E72', '#6A3A4C'
                               ]
-
+                unit = "M" if scale_factor == 1e6 else "B"
                 # Define labels
                 label = [
-                    'Revenue',
-                    'Gross Profit',
-                    'Cost of Revenues',
-                    'Operating Profit',
-                    'Operating Expenses',
-                    'Net Profit',
-                    'Tax',
-                    'Other',
-                    'SG&A',
-                    'Other Expenses',
-                    'R&D',
-                    'Depreciation Amortization Depletion'
+                    f'<span style="font-size: 14px;">Revenue: {total_revenue:.2f}B</span>',
+                    f'<span style="font-size: 14px;">Gross Profit: {gross_profit_value:.2f}B</span>',
+                    f'<span style="font-size: 14px;">Cost of Revenues: {cost_revenue:.2f}B</span>',
+                    f'<span style="font-size: 14px;">Operating Profit: {operating_income:.2f}B</span>',
+                    f'<span style="font-size: 14px;">Operating Expenses: {operating_expense:.2f}B</span>',
+                    f'<span style="font-size: 14px;">Net Profit: {net_income:.2f}B</span>',
+                    f'<span style="font-size: 14px;">Tax: {tax_provision:.2f}B</span>',
+                    f'<span style="font-size: 14px;">Other: {other:.2f}B</span>',
+                    f'<span style="font-size: 14px;">SG&A: {sga:.2f}B</span>',
+                    f'<span style="font-size: 14px;">Other Expenses: {other_operating_expenses:.2f}B</span>',
+                    f'<span style="font-size: 14px;">R&D: {rnd:.2f}B</span>',
+                    f'<span style="font-size: 14px;">Depreciation Amortization Depletion: {depreciation_amortization_depletion:.2f}B</span>'
                 ]
 
                 # Default colors (Green for profit, Red for expenses/loss)
@@ -248,21 +248,22 @@ def generate_sankey(company, selected_year, company_dataframe):
 
                 # Creating a subplot for the bar chart and Sankey diagram
                 fig = make_subplots(
-                    rows=1, cols=2,
-                    column_widths=[0.05, 0.95],
-                    specs=[[{"type": "bar"}, {"type": "sankey"}]]
+                    rows=1, cols=1,
+                    #column_widths=[0.05, 0.95],
+                    #specs=[[{"type": "bar"}, {"type": "sankey"}]]
+                    specs=[[{"type": "sankey"}]]
                 )
 
                 # Add bar chart data
-                for trace in bar_fig.data:
-                    fig.add_trace(trace, row=1, col=1)
+                #for trace in bar_fig.data:
+                #    fig.add_trace(trace, row=1, col=1)
 
                 # Add Sankey diagram data
                 for trace in sankey_fig.data:
-                    fig.add_trace(trace, row=1, col=2)
+                    fig.add_trace(trace, row=1, col=1)
 
                 fig.update_layout(
-                    title_text="Market Cap and Income Statement",
+                    title_text="Income Statement",
                     paper_bgcolor='#F8F8FF'
                 )
 
@@ -271,10 +272,10 @@ def generate_sankey(company, selected_year, company_dataframe):
                 # Positioning for Sankey graph
                 fig.update_traces(
                     selector=dict(type='sankey'),
-                    domain=dict(x=[0.00, 1.00], y=[0.01, 0.5])
+                    domain=dict(x=[0.00, 1.00], y=[0, 0.8])
                 )
-                fig['layout']['xaxis'].update(domain=[0.0, .06])  # X domain for the bar chart ###
-                fig['layout']['yaxis'].update(domain=[0.22, 1])  # Y domain for the bar chart ###
+                #fig['layout']['xaxis'].update(domain=[0.0, .06])  # X domain for the bar chart ###
+                #fig['layout']['yaxis'].update(domain=[0.22, 1])  # Y domain for the bar chart ###
                 #fig.show()
 
                 return fig, {'display': 'block'}
@@ -1187,8 +1188,12 @@ def update_company_cash(pathname, slider_value):
         return generate_cashflow_visual(pathname, selected_year, treemap_df)
     else:
         return generate_cashflow_visual(pathname, selected_year, nasdaq_df)
+        print("Hello")
 
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=8060)
 
+# blah blah blah
+# test test 
+# test 3
