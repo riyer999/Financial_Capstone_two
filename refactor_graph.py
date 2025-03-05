@@ -117,3 +117,4 @@ def generate_graph(company_name, selected_year):
             combined_fig = combine_charts(bar_fig, sankey_fig)
             return combined_fig, {'display': 'block'}
     return {}, {'display': 'none'}
+

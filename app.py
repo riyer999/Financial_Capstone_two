@@ -68,27 +68,6 @@ def generate_sankey(company, selected_year, company_dataframe):
                 depreciation_amortization_depletion = financial_metrics[f'Depreciation_Amortization_Depletion_Income_Statement_{selected_year}'] / scale_factor
 
                 ###################################################
-
-                # initialize market cap bar
-                bar_fig = go.Figure()
-
-                # Plot the market cap
-                categories = ['Market Cap']
-                values = [get_market_cap(ticker)]
-
-                bar_fig.add_trace(go.Bar(
-                    x=categories,
-                    y=values,
-                    marker_color='steelblue'
-                ))
-
-                bar_fig.update_layout(
-                    title='Financial Summary',
-                    xaxis_title='Categories',
-                    yaxis_title='Amount (in Billions)',
-                    barmode='group',
-                    paper_bgcolor='#F8F8FF'
-                )
                 color_link = ['#000000', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',
                               '#008941', '#006FA6', '#A30059', '#FFDBE5', '#7A4900',
                               '#0000A6', '#63FFAC', '#B79762', '#004D43', '#8FB0FF',
@@ -248,34 +227,25 @@ def generate_sankey(company, selected_year, company_dataframe):
 
                 # Creating a subplot for the bar chart and Sankey diagram
                 fig = make_subplots(
-                    rows=1, cols=2,
-                    column_widths=[0.05, 0.95],
-                    specs=[[{"type": "bar"}, {"type": "sankey"}]]
+                    rows=1, cols=1,  # Only one column
+                    specs=[[{"type": "sankey"}]]  # Only Sankey diagram
                 )
-
-                # Add bar chart data
-                for trace in bar_fig.data:
-                    fig.add_trace(trace, row=1, col=1)
 
                 # Add Sankey diagram data
                 for trace in sankey_fig.data:
-                    fig.add_trace(trace, row=1, col=2)
+                    fig.add_trace(trace, row=1, col=1)
 
                 fig.update_layout(
-                    title_text="Market Cap and Income Statement",
+                    title_text="Income Statement",
                     paper_bgcolor='#F8F8FF'
                 )
 
-                fig.update_yaxes(scaleanchor=None, row=1, col=2)
 
                 # Positioning for Sankey graph
                 fig.update_traces(
                     selector=dict(type='sankey'),
-                    domain=dict(x=[0.00, 1.00], y=[0.01, 0.5])
+                    domain=dict(x=[0.00, 0], y=[0.01, 0])
                 )
-                fig['layout']['xaxis'].update(domain=[0.0, .06])  # X domain for the bar chart ###
-                fig['layout']['yaxis'].update(domain=[0.22, 1])  # Y domain for the bar chart ###
-                #fig.show()
 
                 return fig, {'display': 'block'}
 
@@ -827,13 +797,14 @@ def get_company_summary(company_name, treemap_df, nasdaq_df):
 
 
 # Summarization setup
-nltk.download('punkt')
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+#nltk.download('punkt')
+#summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
 
 def simple_summarizer(text):
-    return summarizer(text, max_length=150, min_length=30, do_sample=False)[0]['summary_text']
 
+   # return summarizer(text, max_length=150, min_length=30, do_sample=False)[0]['summary_text']
+    return None
 
 # Step 1: Read the file into a DataFrame
 file_path = 'us_official_nasdaq.csv'  # Replace with the path to your file
