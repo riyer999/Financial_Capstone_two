@@ -217,10 +217,11 @@ def generate_sankey(company, selected_year, company_dataframe):
 
                 sankey_fig.update_layout(
                     hovermode='x',
-                    title="<span style='font-size:36px;color:steelblue;'><b>KO FY23 Income Statement</b></span>",
+                    title="<span style='font-size:36px;color:white;'><b>Income Statement</b></span>",
                     font=dict(size=10, color='white'),
-                    paper_bgcolor='#F8F8FF'
-                )
+                    paper_bgcolor='#121212',  # Black background
+                    plot_bgcolor='#121212',   # Black plot background
+    )
 
                 sankey_fig.update_traces(node_color=color_for_nodes,
                                          link_color=color_for_links)
@@ -237,7 +238,7 @@ def generate_sankey(company, selected_year, company_dataframe):
 
                 fig.update_layout(
                     title_text="Income Statement",
-                    paper_bgcolor='#F8F8FF'
+                    paper_bgcolor='#0c0c0d'
                 )
 
 
@@ -395,7 +396,10 @@ def generate_balance_visual(company, selected_year, company_dataframe):
 
         # Update layout
         balance_fig.update_layout(
-            margin=dict(t=50, l=50, r=50, b=50)
+        margin=dict(t=50, l=50, r=50, b=50),
+        paper_bgcolor='#121212',  # Black background
+        plot_bgcolor='#121212',   # Black plot background
+        font=dict(color='white')  # White font
         )
 
         # Show the plot
@@ -484,6 +488,10 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
             xaxis_title="",
             yaxis_title="Money in Billions of Dollars",
             showlegend=False,
+            font=dict(color='white', size=14),
+            paper_bgcolor='#121212',  # Black background
+            plot_bgcolor='#121212',   # Black plot background
+            
             xaxis=dict(
                 tickmode='array',
                 tickvals=['Operating Cash Flow', 'Issuance Of Debt', 'Capital Expenditure', 'Repayment Of Debt',
@@ -497,6 +505,79 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
 
         return cash_fig
     
+import plotly.graph_objects as go
+import yfinance as yf
+
+
+
+def generate_equity_bond(company, selected_year, company_dataframe):
+    """Generates the equity bond yield visualization for a given company and year."""
+
+    if not company or not selected_year:
+        print("DEBUG: Missing company or year")
+        return go.Figure()  # Return an empty figure if inputs are invalid
+
+    # Extract and normalize company name
+    company_name = company.split('/')[-1] if company.startswith('/item/') else company
+    company_name_normalized = company_name.strip().lower()
+
+    # Match the ticker symbol
+    company_dataframe['Normalized_Company'] = company_dataframe['Company'].str.strip().str.lower()
+    matched_tickers = company_dataframe[company_dataframe['Normalized_Company'] == company_name_normalized]['Ticker']
+
+    if matched_tickers.empty:
+        print(f"DEBUG: No ticker found for {company_name}")
+        return go.Figure()
+
+    ticker = matched_tickers.values[0]
+    
+    # Load financial data for the selected year
+    financial_metrics = load_data(ticker, years=[selected_year])
+    stock = yf.Ticker(ticker)
+    stock_info = stock.info
+
+    # Retrieve necessary financial values
+    pretax_income = financial_metrics.get(f'Pretax_Income_{selected_year}', 0)
+    shares_outstanding = stock_info.get('sharesOutstanding', None)
+    stock_price = stock_info.get('currentPrice', None)
+
+    # Debugging missing values
+    if pretax_income == 0:
+        print(f"DEBUG: Pretax income is missing for {ticker} in {selected_year}")
+    if not shares_outstanding:
+        print(f"DEBUG: Shares outstanding is missing for {ticker}")
+    if not stock_price:
+        print(f"DEBUG: Stock price is missing for {ticker}")
+
+    # Ensure valid values before calculation
+    if pretax_income == 0 or not shares_outstanding or not stock_price:
+        return go.Figure()
+
+    # Calculate Pretax Income Per Share
+    pretax_per_share = pretax_income / shares_outstanding
+    equity_bond_yield = (pretax_per_share / stock_price) * 100  # Convert to percentage
+
+    print(f"DEBUG: {ticker} {selected_year} - Equity Bond Yield: {equity_bond_yield:.2f}%")
+
+    # Create bar chart
+    fig = go.Figure(go.Bar(
+        x=[selected_year],
+        y=[equity_bond_yield],
+        text=[f"{equity_bond_yield:.2f}%"],
+        textposition='outside',
+        marker_color='steelblue'
+    ))
+
+    fig.update_layout(
+        title=f"Equity Bond Yield for {company_name} ({selected_year})",
+        xaxis_title="Year",
+        yaxis_title="Equity Bond Yield (%)",
+        yaxis=dict(range=[0, max(equity_bond_yield * 1.2, 5)]),  # Ensure readable scale
+        template="plotly_dark"
+    )
+
+    return fig  # ✅ Returns only the figure (Dash-friendly)
+
 
 
 def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
@@ -1070,7 +1151,8 @@ def display_page(pathname, compare_value):
 
             # Bottom graph
             dbc.Row([
-                dbc.Col(dcc.Graph(id='company-balance-graphic', style={'height': '500px', 'width': '98.6%'}), width=6)
+                dbc.Col(dcc.Graph(id='company-balance-graphic', style={'height': '500px', 'width': '98.6%'}), width=6),
+                dbc.Col(dcc.Graph(id='equity-bond-graph', style={'height': '500px', 'width': '98.6%'}), width=6)
             ]),
 
             # Back Button
@@ -1159,7 +1241,28 @@ def update_company_cash(pathname, slider_value):
     else:
         return generate_cashflow_visual(pathname, selected_year, nasdaq_df)
 
+@app.callback(
+    Output("equity-bond-graph", "figure"),
+    [Input("url", "pathname"), Input("year-dropdown", "value")]
+)
+def update_equity_bond(pathname, slider_value):
+    """Updates the Equity Bond Yield graph based on the selected company and year."""
+    
+    # Define the list of years corresponding to slider indices
+    years = ['2020', '2021', '2022', '2023', '2024']
+    
+    # Convert the slider numeric value to the corresponding year string
+    selected_year = years[slider_value]
 
+    # Extract the company name from the pathname
+    company_name = pathname.split('/')[-1]
+
+    # Determine which dataset to use (S&P 500 or Nasdaq)
+    if company_name in treemap_df['Company'].values:
+        return generate_equity_bond(pathname, selected_year, treemap_df)
+    else:
+        return generate_equity_bond(pathname, selected_year, nasdaq_df)
+    return go.Figure()
 if __name__ == "__main__":
     app.run_server(debug=True, port=8060)
 
