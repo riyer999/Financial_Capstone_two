@@ -1133,7 +1133,30 @@ def display_page(pathname, compare_value):
                 html.H3("Company Summary"),
                 html.P(company_summary, style={'fontSize': '16px', 'color': '#333'})
             ], style={'padding': '20px', 'border': '1px solid #ddd', 'borderRadius': '5px', 'backgroundColor': '#f9f9f9'}),
-
+            html.Div([
+                html.Label("Select Time Period:", style={'color': 'white'}),
+                dcc.Dropdown(
+                    id="time-period-dropdown",
+                    options=[
+                        {"label": "1 Day (1min interval)", "value": "1d"},
+                        {"label": "5 Days (1d interval)", "value": "5d"},
+                        {"label": "1 Month (1d interval)", "value": "1mo"},
+                        {"label": "3 Months (1d interval)", "value": "3mo"},
+                        {"label": "6 Months (1d interval)", "value": "6mo"},
+                        {"label": "1 Year (1d interval)", "value": "1y"},
+                        {"label": "5 Years (1d interval)", "value": "5y"},
+                        {"label": "Max (1wk interval)", "value": "max"}
+                    ],
+                    value="1d",  
+                    clearable=False,
+                    style={'width': '200px'}
+                    ),
+    
+    dcc.Graph(id="real-time-stock-graph", style={'height': '500px', 'width': '100%'}),
+    
+    # Interval component to refresh data
+    dcc.Interval(id="interval-component", interval=5000, n_intervals=0)
+]),
             dcc.Slider(
                 id='year-dropdown',
                 min=0,
@@ -1221,6 +1244,59 @@ def update_company_graphic_balance(pathname, slider_value):
         return generate_balance_visual(pathname, selected_year, nasdaq_df)
 
 @app.callback(
+    Output("real-time-stock-graph", "figure"),
+    [Input("url", "pathname"), Input("interval-component", "n_intervals"), Input("time-period-dropdown", "value")]
+)
+def update_real_time_stock_graph(pathname, n_intervals, selected_period):
+    """Fetches and updates stock data based on the selected time period, ensuring correct intervals."""
+    
+    # Extract the company name from the pathname
+    company_name = pathname.split('/')[-1]
+
+    # Get the ticker symbol
+    matched_tickers = treemap_df[treemap_df['Company'] == company_name]['Ticker']
+    if matched_tickers.empty:
+        return go.Figure()
+
+    ticker = matched_tickers.values[0]
+
+    # **Set interval based on selected period**
+    if selected_period == "1d":
+        selected_interval = "1m"  # 1-minute intervals for 1-day view
+    elif selected_period == "max":
+        selected_interval = "1wk"  # 1-week intervals for max period
+    else:
+        selected_interval = "1d"  # 1-day intervals for all other periods
+
+    # Fetch stock data for selected period & interval
+    stock = yf.Ticker(ticker)
+    stock_data = stock.history(period=selected_period, interval=selected_interval)
+
+    if stock_data.empty:
+        return go.Figure()
+
+    # Create the line chart for stock prices
+    fig = go.Figure(go.Scatter(
+        x=stock_data.index,
+        y=stock_data['Close'],
+        mode="lines",
+        name=f"{ticker} Price",
+        line=dict(color="cyan", width=2)
+    ))
+
+    # Layout improvements
+    fig.update_layout(
+        title=f"Stock Price: {company_name} ({ticker}) [{selected_period}]",
+        xaxis_title="Date",
+        yaxis_title="Stock Price (USD)",
+        template="plotly_dark",
+        paper_bgcolor="#121212",
+        plot_bgcolor="#121212"
+    )
+
+    return fig
+
+@app.callback(
     Output('company-cashflow-graphic', 'figure'),
     [Input('url', 'pathname'),
      Input('year-dropdown', 'value')]
@@ -1263,6 +1339,8 @@ def update_equity_bond(pathname, slider_value):
     else:
         return generate_equity_bond(pathname, selected_year, nasdaq_df)
     return go.Figure()
+
 if __name__ == "__main__":
+    
     app.run_server(debug=True, port=8060)
 
