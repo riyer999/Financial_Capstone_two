@@ -49,15 +49,28 @@ def generate_sankey(company, selected_year, company_dataframe):
                     scale_factor = 1e9  # Scale to billions
 
                 total_revenue = financial_metrics[f'Total_Revenue_{selected_year}'] / scale_factor
-                gross_profit_value = financial_metrics[f'Gross_Profit_{selected_year}'] / scale_factor
+
+                gross_profit_value = financial_metrics.get(f'Gross_Profit_{selected_year}', None) / scale_factor
+                net_interest_income = financial_metrics.get(f'Net_Interest_Income_{selected_year}', 0) / scale_factor
+                if gross_profit_value is None or gross_profit_value == 0:
+                    gross_profit_value = net_interest_income
+
                 cost_revenue = financial_metrics.get(f'Cost_Of_Revenue_{selected_year}', 0) / scale_factor
                 print(cost_revenue)
                 if cost_revenue == 0:
                     cost_revenue = financial_metrics.get(f'Total_Expenses_{selected_year}', 0) / scale_factor
                 print(cost_revenue)
 
-                operating_income = financial_metrics[f'Operating_Income_{selected_year}'] / scale_factor
-                operating_expense = financial_metrics[f'Operating_Expense_{selected_year}'] / scale_factor
+                operating_income = financial_metrics.get(f'Operating_Income_{selected_year}', None) / scale_factor
+                interest_income = financial_metrics.get(f'Interest_Income_{selected_year}', 0) / scale_factor
+                if operating_income is None or operating_income == 0:
+                    operating_income = interest_income
+
+                operating_expense = financial_metrics.get(f'Operating_Expense_{selected_year}', None) / scale_factor
+                interest_expense = financial_metrics.get(f'Interest_Expense_{selected_year}', 0) / scale_factor
+                if operating_expense is None or operating_expense == 0:
+                    operating_expense = interest_expense
+
                 tax_provision = financial_metrics[f'Tax_Provision_{selected_year}'] / scale_factor
                 rnd = financial_metrics[f'Research_And_Development_{selected_year}'] / scale_factor
                 sga = financial_metrics[f'Selling_General_And_Administration_{selected_year}'] / scale_factor
