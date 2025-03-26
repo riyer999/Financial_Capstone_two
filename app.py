@@ -50,27 +50,6 @@ def generate_sankey(company, selected_year, company_dataframe):
 
                 total_revenue = financial_metrics[f'Total_Revenue_{selected_year}'] / scale_factor
 
-                gross_profit_value = financial_metrics.get(f'Gross_Profit_{selected_year}', None) / scale_factor
-                net_interest_income = financial_metrics.get(f'Net_Interest_Income_{selected_year}', 0) / scale_factor
-                if gross_profit_value is None or gross_profit_value == 0:
-                    gross_profit_value = net_interest_income
-
-                cost_revenue = financial_metrics.get(f'Cost_Of_Revenue_{selected_year}', 0) / scale_factor
-                print(cost_revenue)
-                if cost_revenue == 0:
-                    cost_revenue = financial_metrics.get(f'Total_Expenses_{selected_year}', 0) / scale_factor
-                print(cost_revenue)
-
-                operating_income = financial_metrics.get(f'Operating_Income_{selected_year}', None) / scale_factor
-                interest_income = financial_metrics.get(f'Interest_Income_{selected_year}', 0) / scale_factor
-                if operating_income is None or operating_income == 0:
-                    operating_income = interest_income
-
-                operating_expense = financial_metrics.get(f'Operating_Expense_{selected_year}', None) / scale_factor
-                interest_expense = financial_metrics.get(f'Interest_Expense_{selected_year}', 0) / scale_factor
-                if operating_expense is None or operating_expense == 0:
-                    operating_expense = interest_expense
-
                 tax_provision = financial_metrics[f'Tax_Provision_{selected_year}'] / scale_factor
                 rnd = financial_metrics[f'Research_And_Development_{selected_year}'] / scale_factor
                 sga = financial_metrics[f'Selling_General_And_Administration_{selected_year}'] / scale_factor
@@ -79,6 +58,42 @@ def generate_sankey(company, selected_year, company_dataframe):
                 ga = financial_metrics[f'General_And_Administrative_Expense_{selected_year}'] / scale_factor
                 other_operating_expenses = financial_metrics[f'Other_Operating_Expenses_{selected_year}'] / scale_factor
                 depreciation_amortization_depletion = financial_metrics[f'Depreciation_Amortization_Depletion_Income_Statement_{selected_year}'] / scale_factor
+
+                # values that make up non interest expenses because the API doesn't get that value
+                selling_and_marketing_expense = financial_metrics.get(f'Selling_General_And_Administration_{selected_year}', 0) / scale_factor
+                occupancy_and_equipment = financial_metrics.get(f'Occupancy_And_Equipment_{selected_year}', 0) / scale_factor
+                salaries_and_wages = financial_metrics.get(f'Salaries_And_Wages_{selected_year}', 0) / scale_factor
+                professional_expenses = financial_metrics.get(f'Professional_Expense_And_Contract_Services_Expense_{selected_year}', 0) / scale_factor
+                other_non_interest = financial_metrics.get(f'Other_Non_Interest_Expense_{selected_year}', 0) / scale_factor
+                
+                non_interest_expense = (selling_and_marketing_expense + occupancy_and_equipment + salaries_and_wages + professional_expenses + other_non_interest)
+                
+                # gross profit should be the total revenue - the cost of revenues but cost of revenues is hard to get
+                interest_expense = financial_metrics.get(f'Interest_Expense_{selected_year}', 0) / scale_factor
+                gross_profit_bank = total_revenue - interest_expense
+                gross_profit_value = financial_metrics.get(f'Gross_Profit_{selected_year}', None) / scale_factor
+                if gross_profit_value is None or gross_profit_value == 0:
+                    gross_profit_value = gross_profit_bank
+
+                
+                # interest expense is only one thing that goes into it - its a sort of placeholder
+                cost_revenue = financial_metrics.get(f'Cost_Of_Revenue_{selected_year}', None) / scale_factor
+                if cost_revenue is None or cost_revenue == 0:
+                    cost_revenue = interest_expense
+
+                # operating profit is the sum of the two nodes after it that were already functional
+                operating_income = financial_metrics.get(f'Operating_Income_{selected_year}', None) / scale_factor
+                operating_income_bank = tax_provision + net_income
+                if operating_income is None or operating_income == 0:
+                    operating_income = operating_income_bank
+                
+                
+                # most of the issues lie here - hardly any of these are in yfinance api
+                operating_expense = financial_metrics.get(f'Operating_Expense_{selected_year}', None) / scale_factor
+                if operating_expense is None or operating_expense == 0:
+                    operating_expense = non_interest_expense
+
+                
 
                 ###################################################
                 color_link = ['#000000', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',
