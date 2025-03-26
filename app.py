@@ -500,7 +500,7 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
             x=year_data['Category1'],
             y=year_data['Value1'],
             name=f'Year {year_data["Year"]} - Money In',
-            marker=dict(color='green')
+            marker=dict(color='steelblue')
         ), row=1, col=1)
 
         cash_fig.add_trace(go.Bar(
@@ -570,15 +570,16 @@ def generate_equity_bond(company, selected_year, company_dataframe):
     stock_price = stock_info.get('currentPrice', None)
 
     # Debugging missing values
-    if pretax_income == 0:
-        print(f"DEBUG: Pretax income is missing for {ticker} in {selected_year}")
-    if not shares_outstanding:
-        print(f"DEBUG: Shares outstanding is missing for {ticker}")
-    if not stock_price:
-        print(f"DEBUG: Stock price is missing for {ticker}")
+    #if pretax_income == 0:
+    #    print(f"DEBUG: Pretax income is missing for {ticker} in {selected_year}")
+    #if not shares_outstanding:
+    #    print(f"DEBUG: Shares outstanding is missing for {ticker}")
+    #if not stock_price:
+    #    print(f"DEBUG: Stock price is missing for {ticker}")
 
     # Ensure valid values before calculation
     if pretax_income == 0 or not shares_outstanding or not stock_price:
+        print(f"DEBUG: Missing data for {ticker} in {selected_year}")
         return go.Figure()
 
     # Calculate Pretax Income Per Share
@@ -587,24 +588,32 @@ def generate_equity_bond(company, selected_year, company_dataframe):
 
     print(f"DEBUG: {ticker} {selected_year} - Equity Bond Yield: {equity_bond_yield:.2f}%")
 
+    # Determine graph color
+    bar_color = 'red' if equity_bond_yield < 0 else 'green'
+
+    # Determine y-axis range
+    y_min = min(equity_bond_yield * 1.2, -5) if equity_bond_yield < 0 else 0
+    y_max = max(equity_bond_yield * 1.2, 5)
+
     # Create bar chart
     fig = go.Figure(go.Bar(
         x=[selected_year],
         y=[equity_bond_yield],
         text=[f"{equity_bond_yield:.2f}%"],
         textposition='outside',
-        marker_color='steelblue'
+        marker_color= bar_color
     ))
 
     fig.update_layout(
         title=f"Equity Bond Yield for {company_name} ({selected_year})",
         xaxis_title="Year",
         yaxis_title="Equity Bond Yield (%)",
-        yaxis=dict(range=[0, max(equity_bond_yield * 1.2, 5)]),  # Ensure readable scale
+        #yaxis=dict(range=[0, max(equity_bond_yield * 1.2, 5)]),  # Ensure readable scale
+        yaxis=dict(range=[y_min, y_max]),  # Allow negative values
         template="plotly_dark"
     )
 
-    return fig  # ✅ Returns only the figure (Dash-friendly)
+    return fig  # Returns only the figure (Dash-friendly)
 
 
 
@@ -943,36 +952,44 @@ app.layout = dbc.Container([
                 html.Br(),
                 html.Span("Visualization of Company Financials")
             ], style={'color': '#e6e6e6'}),
-            html.P("Search or Click on a Company to view their financials!", style={'color': '#cccccc'})
-        ], style={"vertical-align": "top", "height": 210}),
+            html.P("Search or Click on a Company to view their financials!", style={'color': '#cccccc', 'font-size': '18px'})
+        ], style={"vertical-align": "top", "height": 320}),  
 
+        # Buttons Section with Fixed Spacing
         html.Div([
             dbc.RadioItems(
                 className='btn-group',
                 inputClassName='btn-check',
                 labelClassName="btn btn-outline-light",
                 labelCheckedClassName="btn btn-light",
-                options=[{"label": "Home", "value": 1}, {"label": "Compare", "value": 2}],
+                options=[
+                    {"label": "Home", "value": 1},
+                    {"label": "Compare", "value": 2}
+                ],
                 value=1,
-                id='compare-button'
+                id='compare-button',
+                style={'display': 'flex', 'gap': '15px'}  # Adds spacing between buttons
             ),
-            html.Div([
-                dcc.Dropdown(
-                    id="autocomplete-dropdown",
-                    options=autocomplete_options,
-                    placeholder="Search Company...",
-                    style={'width': 400, 'backgroundColor': '#333333', 'color': '#000000'}, # from 200
-                    searchable=True,
-                    multi=False,
+        ], style={'margin-bottom': '15px'}),  # Adds spacing below buttons
 
-                ),
-            ], style={'display': 'flex', 'flex-direction': 'column', 'align-items': 'flex-start', 'margin-left': 15})
-        ], style={'display': 'flex', 'align-items': 'center', 'margin-left': 15, "height": 220})
-    ], style={'width': 340, 'margin-left': 35, 'margin-top': 35}),
+        # Search Bar Section
+        html.Div([
+            dcc.Dropdown(
+                id="autocomplete-dropdown",
+                options=autocomplete_options,
+                placeholder="Search Company...",
+                style={'width': '100%', 'backgroundColor': '#333333', 'color': '#000000'},
+                searchable=True,
+                multi=False,
+            ),
+        ], style={'margin-top': '10px', 'width': '100%'}),  # Positioned below buttons
 
-    # Main content area
+    ], style={'width': 300, 'margin-left': 25, 'margin-top': 35}),  # Sidebar adjustments
+
+    # Main Content Area
     html.Div(id='page-content', style={'width': 890, 'margin': 40})
-], fluid=True, style={'display': 'flex', 'backgroundColor': '#010103'})
+
+], fluid=True, style={'display': 'flex', 'backgroundColor': '#010103'}) 
 
 # Define page layouts
 main_page_layout = html.Div([
