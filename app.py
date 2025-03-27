@@ -308,12 +308,17 @@ def generate_balance_visual(company, selected_year, company_dataframe):
         }
 
         # Define hierarchy for treemap with a root node
+
+
         hierarchy = {
+
             "Total Assets": {
                 "Current Assets": {
                     "Cash Cash Equivalents And Short Term Investments": [
+                        "Cash Cash Equivalents And Short Term Investments",
                         "Cash And Cash Equivalents",
-                        "Other Short Term Investments"
+                        'Cash Financial',
+                        "Restricted Cash"
                     ],
                     "Receivables": [
                         "Receivables",
@@ -321,40 +326,52 @@ def generate_balance_visual(company, selected_year, company_dataframe):
                     "Inventory": [
                         "Raw Materials",
                         "Finished Goods",
+                        "Work In Process",
                         "Other Inventories",
                     ],
                     "Prepaid Assets": [
                         "Prepaid Assets",
                     ],
-                    "Other Current Assets": [
+                    "Other": [
                         "Other Current Assets",
+                    ],
+                    "Cash and Other":[
+                        "Cash Cash Equivalents And Federal Funds Sold"
+                    ],
+                    "Short Term Investments":[
+                        "Other Short Term Investments",
                     ]
                 },
                 "Total Non-current Assets": {
                     "Net PPE": [
                         "Net PPE",
                     ],
-                    "Goodwill And Other Intangible Assets": [
-                        "Goodwill",
-                        "Other Intangible Assets",
+                    "Goodwill": [
+                        "Goodwill And Other Intangible Assets",
                     ],
                     "Investments And Advances": [
-                        "Long Term Equity Investment",
-                        "Other Investments"
+                        "Investments And Advances",
+
+                    ],
+                    "Additional Assets": [
+                        "Financial Assets",
                     ],
                     "Non Current Accounts Receivable": [
                         "Non Current Accounts Receivable",
                     ],
-                    "Non Current Note Receivables": [
+                    "Long Term Equity Investment ":[
+                        "Long Term Equity Investment",
+                    ],
+                    "Non Current Receivables": [
                         "Non Current Note Receivables",
                     ],
                     "Non Current Deferred Assets": [
                         "Non Current Deferred Assets",
                     ],
-                    "Defined Pension Benefit": [
+                    "Defined Benefit": [
                         "Defined Pension Benefit",
                     ],
-                    "Other Non Current Assets": [
+                    "Other": [
                         "Other Non Current Assets",
                     ]
                 }
@@ -363,21 +380,31 @@ def generate_balance_visual(company, selected_year, company_dataframe):
                 "Total Liabilities": {
                     "Current Liabilities": [
                         "Payables And Accrued Expenses",
-                        "Pensionand Other Post Retirement Benefit Plans ...",
+                        "Pensionand Other Post Retirement Benefit Plans Current",
                         "Current Debt And Capital Lease Obligation",
-                        "Other Current Liabilities"
+                        "Other Current Liabilities",
+                        "Current Provisions",
+                        "Current Deferred Liabilities",
+                        'Derivative Product Liabilities'
+                        'Other Current Borrowings',
                     ],
                     "Total Non Current Liabilities Net Minority Interest": [
                         "Long Term Debt And Capital Lease Obligation",
                         "Non Current Deferred Liabilities",
-                        "Other Non Current Liabilities"
+                        "Other Non Current Liabilities",
+                        "Tradeand Other Payables Non Current",
+                        "Long Term Provisions"
+                        #"Preferred Securities Outside Stock Equity"
+                    ],
+                    "Other Liabilities": [
+                        "Other Liabilities"
                     ]
                 },
                 "Total Equity": {
-                    "Stockholders Equity": [
+                    "Equity": [
                         "Stockholders Equity"
                     ],
-                    "Minority Interest": [
+                    "Interest": [
                         "Minority Interest"
                     ]
                 }
@@ -452,7 +479,7 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
         ticker = matched_tickers.values[0]
 
         # Load only relevant cash flow statement data
-        financial_metrics_all_years = load_data(ticker, years=['2020', '2021', '2022', '2023',
+        financial_metrics_all_years = load_data(ticker, years=['2021', '2022', '2023',
                                                                '2024'])  # Load data for all years
 
         # Extract only the cash flow statement-related keys
@@ -465,7 +492,7 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
         max_value = 0
 
         # Loop through the relevant keys and years to calculate the maximum value
-        for year in ['2020', '2021', '2022', '2023', '2024']:
+        for year in ['2021', '2022', '2023', '2024']:
             for key in cash_flow_keys:
                 # Build the key for the specific year (e.g., 'Operating_Cash_Flow_2024')
                 year_key = f'{key}_{year}'
@@ -532,10 +559,6 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
         )
 
         return cash_fig
-    
-import plotly.graph_objects as go
-import yfinance as yf
-
 
 
 def generate_equity_bond(company, selected_year, company_dataframe):
@@ -617,7 +640,7 @@ def generate_equity_bond(company, selected_year, company_dataframe):
 
 
 
-def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
+def load_data(ticker, years=['2021', '2022', '2023', '2024']):
     # Fetch the data dynamically using yfinance
     ystock = yf.Ticker(ticker)
     
@@ -625,6 +648,9 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
     income_statement = ystock.incomestmt
     print(income_statement)
     balance_sheet = ystock.balance_sheet
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    print(balance_sheet)
     cashflow_statement = ystock.cashflow  # This fetches the cash flow statement
 
     # Fetch the stock's information (including shares outstanding)
@@ -670,20 +696,29 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
 
     balance_sheet_keys = [
         'Total Assets',
+        'Cash Cash Equivalents And Federal Funds Sold',
         'Current Assets',
         'Cash Cash Equivalents And Short Term Investments',
         'Cash And Cash Equivalents',
+        'Cash',
+        'Cash Financial',
+        'Cash Equivalents',
         'Other Short Term Investments',
         'Receivables',
         'Inventory',
         'Raw Materials',
         'Finished Goods',
+        'Work In Process',
         'Other Inventories',
         'Prepaid Assets',
+        'Restricted Cash',
         'Other Current Assets',
         #
         'Total Non Current Assets',
+        'Long Term Equity Investment',
         'Net PPE',
+        'Investments And Advances',
+        'Financial Assets',
         'Goodwill And Other Intangible Assets',
         'Goodwill',
         'Other Intangible Assets',
@@ -697,15 +732,22 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
         'Other Non Current Assets',
         #
         'Total Liabilities Net Minority Interest',
+        'Other Current Borrowings',
         'Current Liabilities',
         'Payables And Accrued Expenses',
-        'Pensionand Other Post Retirement Benefit Plans ...',
+        'Pensionand Other Post Retirement Benefit Plans Current',
+        'Current Provisions',
+        'Current Deferred Liabilities',
         'Current Debt And Capital Lease Obligation',
         'Other Current Liabilities',
         'Total Non Current Liabilities Net Minority Interest',
+        'Long Term Provisions',
+        'Preferred Securities Outside Stock Equity',
         'Long Term Debt And Capital Lease Obligation',
         'Non Current Deferred Liabilities',
         'Other Non Current Liabilities',
+        'Derivative Product Liabilities',
+        'Tradeand Other Payables Non Current',
         #
         'Total Equity Gross Minority Interest',
         #
@@ -764,23 +806,100 @@ def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
                 variable_names[variable_name] = 0  # Return 0 if key doesn't exist
 
         # loop through the years and each key for the balance sheet
+        cash_and_cash_equivalents = None
+        cash_and_short_term_investments = None
+        other_short_term_investments = None
+        total_liabilities_calculated = 0
+        total_liabilities_reported = None
+
+        # List of keys representing liabilities
+        liabilities_keys = [
+            "Payables And Accrued Expenses",
+            "Pensionand Other Post Retirement Benefit Plans Current",
+            "Current Debt And Capital Lease Obligation",
+            "Other Current Liabilities",
+            "Current Provisions",
+            "Current Deferred Liabilities",
+            'Derivative Product Liabilities',
+            'Other Current Borrowings',
+            "Long Term Debt And Capital Lease Obligation",
+            "Non Current Deferred Liabilities",
+            "Other Non Current Liabilities",
+            "Tradeand Other Payables Non Current",
+            "Long Term Provisions"
+        ]
+
         for key in balance_sheet_keys:
             variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
             try:
                 value = balance_sheet.loc[key, year]
+
+                # Print the value for each key to debug
+                print(f"Processing {key} for {year}: {value}")
+
+                # Store the value if it exists
                 if not value.empty:
-                    #print(f"Checking value for {key} in {year}: {value}")
-
-                    # Only attempt to access the first element if the value is not empty
-                    variable_names[variable_name] = abs(value.iloc[0])  # or any logic you need
+                    variable_names[variable_name] = abs(value.iloc[0])
                 else:
-                    # Handle the case where the value is empty
-                    # For example, set a default value or log the issue
-                    variable_names[variable_name] = 0  # or whatever logic you prefer
+                    variable_names[variable_name] = 0
 
+                # Capture values for conditional logic
+                if key == 'Cash And Cash Equivalents':
+                    cash_and_cash_equivalents = abs(value.iloc[0]) if pd.notna(value.iloc[0]) else 0
+                    print(f"Cash And Cash Equivalents for {year}: {cash_and_cash_equivalents}")
+
+                if key == 'Cash Cash Equivalents And Short Term Investments':
+                    cash_and_short_term_investments = abs(value.iloc[0]) if pd.notna(value.iloc[0]) else 0
+                    print(
+                        f"Cash Cash Equivalents And Short Term Investments for {year}: {cash_and_short_term_investments}")
+
+                if key == 'Other Short Term Investments':
+                    other_short_term_investments = abs(value.iloc[0]) if pd.notna(value.iloc[0]) else 0
+                    print(f"Other Short Term Investments for {year}: {other_short_term_investments}")
+
+                # Sum up liabilities
+                if key in liabilities_keys:
+                    total_liabilities_calculated += abs(value.iloc[0]) if pd.notna(value.iloc[0]) else 0
+                    print(f"Updated Total Liabilities Calculated for {year}: {total_liabilities_calculated}")
+
+                # Capture total liabilities reported for comparison
+                if key == 'Total Liabilities Net Minority Interest':
+                    total_liabilities_reported = abs(value.iloc[0]) if pd.notna(value.iloc[0]) else 0
+                    print(f"Total Liabilities Reported for {year}: {total_liabilities_reported}")
 
             except KeyError:
-                variable_names[variable_name] = 0  # Return 0 if key doesn't exist
+                variable_names[variable_name] = 0
+                print(f"KeyError for {key} in {year}, setting to 0")
+
+        # Final conditional logic outside the loop
+        # Handle "Cash And Cash Equivalents"
+        if cash_and_short_term_investments and cash_and_short_term_investments > 0:
+            variable_names[f"Cash_And_Cash_Equivalents_{year}"] = 0
+        else:
+            variable_names[
+                f"Cash_And_Cash_Equivalents_{year}"] = cash_and_cash_equivalents if cash_and_cash_equivalents is not None else 0
+
+        # Handle "Other Short Term Investments"
+        if cash_and_short_term_investments and cash_and_short_term_investments > 0:
+            variable_names[f"Other_Short_Term_Investments_{year}"] = 0
+        else:
+            variable_names[
+                f"Other_Short_Term_Investments_{year}"] = other_short_term_investments if other_short_term_investments is not None else 0
+
+        # Handling the total liabilities discrepancy (if necessary)
+        if total_liabilities_reported is not None:
+            other_liabilities = total_liabilities_reported - total_liabilities_calculated
+
+            # Only create the variable if the difference is positive
+            if other_liabilities > 0:
+                variable_names[f"Other_Liabilities_{year}"] = other_liabilities
+                print(f"Other Liabilities for {year}: {other_liabilities}")
+
+        # Dynamically check if "Other Liabilities" exists
+        if f"Other_Liabilities_{year}" in variable_names:
+            print(f"Other Liabilities for {year} exists: {variable_names[f'Other_Liabilities_{year}']}")
+        else:
+            print(f"Other Liabilities for {year} does not exist")
 
         for key in cashflow_statement_keys:
             variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
@@ -1054,7 +1173,7 @@ compare_page_layout = html.Div([
                 html.Label("Select Year", style={'color': 'white'}),
                 dcc.Dropdown(
                     id="year-dropdown-1",
-                    options=[{"label": str(year), "value": str(year)} for year in range(2020, 2025)],
+                    options=[{"label": str(year), "value": str(year)} for year in range(2021, 2025)],
                     placeholder="Select Year"
                 ),
             ], style={'padding': '10px'}),
@@ -1086,7 +1205,7 @@ compare_page_layout = html.Div([
                 html.Label("Select Year", style={'color': 'white'}),
                 dcc.Dropdown(
                     id="year-dropdown-2",
-                    options=[{"label": str(year), "value": str(year)} for year in range(2020, 2025)],
+                    options=[{"label": str(year), "value": str(year)} for year in range(2021, 2025)],
                     placeholder="Select Year"
                 ),
             ], style={'padding': '10px'}),
@@ -1205,8 +1324,8 @@ def display_page(pathname, compare_value):
             dcc.Slider(
                 id='year-dropdown',
                 min=0,
-                max=4,
-                marks={i: year for i, year in enumerate(['2020', '2021', '2022', '2023', '2024'])},
+                max=3,
+                marks={i: year for i, year in enumerate(['2021', '2022', '2023', '2024'])},
                 value=0,  # Default value corresponds to '2020'
                 step=None
             ),
@@ -1254,7 +1373,7 @@ def display_page(pathname, compare_value):
 )
 def update_company_graphic(pathname, slider_value):
     # Define the list of years corresponding to slider indices
-    years = ['2020', '2021', '2022', '2023', '2024']
+    years = ['2021', '2022', '2023', '2024']
 
     # Convert the slider numeric value to the corresponding year string
     selected_year = years[slider_value]
@@ -1275,7 +1394,7 @@ def update_company_graphic(pathname, slider_value):
 )
 def update_company_graphic_balance(pathname, slider_value):
     # Define the list of years corresponding to slider indices
-    years = ['2020', '2021', '2022', '2023', '2024']
+    years = ['2021', '2022', '2023', '2024']
 
     # Convert the slider numeric value to the corresponding year string
     selected_year = years[slider_value]
@@ -1349,7 +1468,7 @@ def update_real_time_stock_graph(pathname, n_intervals, selected_period):
 
 def update_company_cash(pathname, slider_value):
     # Define the list of years corresponding to slider indices
-    years = ['2020', '2021', '2022', '2023', '2024']
+    years = ['2021', '2022', '2023', '2024']
 
     # Convert the slider numeric value to the corresponding year string
     selected_year = years[slider_value]
@@ -1370,7 +1489,7 @@ def update_equity_bond(pathname, slider_value):
     """Updates the Equity Bond Yield graph based on the selected company and year."""
     
     # Define the list of years corresponding to slider indices
-    years = ['2020', '2021', '2022', '2023', '2024']
+    years = ['2021', '2022', '2023', '2024']
     
     # Convert the slider numeric value to the corresponding year string
     selected_year = years[slider_value]
