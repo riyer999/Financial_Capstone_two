@@ -620,10 +620,10 @@ def generate_equity_bond(company, selected_year, company_dataframe):
 def load_data(ticker, years=['2020', '2021', '2022', '2023', '2024']):
     # Fetch the data dynamically using yfinance
     ystock = yf.Ticker(ticker)
-
+    
     # Fetch the financial data
     income_statement = ystock.incomestmt
-
+    print(income_statement)
     balance_sheet = ystock.balance_sheet
     cashflow_statement = ystock.cashflow  # This fetches the cash flow statement
 
