@@ -266,7 +266,8 @@ def generate_sankey(company, selected_year, company_dataframe):
 
                 fig.update_layout(
                     title_text="Income Statement",
-                    paper_bgcolor='#0c0c0d'
+                    paper_bgcolor='#0c0c0d',
+                    font=dict(color='white')
                 )
 
 
