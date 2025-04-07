@@ -657,10 +657,33 @@ def safe_float(value):
 # Main function to process the data
 def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
     ystock = yf.Ticker(ticker)
+    ##
+    filename = f"{ticker}_deposits.pkl"
 
+    # Dictionary to store the extracted values
+    variable_names = {}
+
+    try:
+        # Open and load the pickle file
+        with open(filename, "rb") as f:
+            data = pickle.load(f)  # Load the dictionary from the file
+
+        # Extract the required years from the loaded data
+        for year in years:
+            key = f"Deposits_{year}"
+            if key in data:
+                variable_names[key] = data[key]
+
+    except FileNotFoundError:
+        print(f"Warning: {filename} not found. Skipping...")
+    except Exception as e:
+        print(f"Error loading {filename}: {e}")
+
+
+    print(variable_names)
     # Fetch the financial data
     income_statement = ystock.incomestmt
-    print(income_statement)
+
     balance_sheet = ystock.balance_sheet
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
