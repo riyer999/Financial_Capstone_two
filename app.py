@@ -3,6 +3,7 @@ import yfinance as yf
 import pandas as pd
 import os
 import numpy as np
+import pickle
 from dash import Dash, dash, dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
@@ -11,6 +12,9 @@ import plotly.express as px
 from transformers import pipeline
 from yahooquery import Ticker
 from fuzzywuzzy import process
+
+from edgar import set_identity, Company
+
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
@@ -296,6 +300,7 @@ def generate_balance_visual(company, selected_year, company_dataframe):
     if not matched_tickers.empty:
         ticker = matched_tickers.values[0]
         financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
+        print(f"this is financial metrics {financial_metrics}")
 
         # Replace this with actual financial metrics from `financial_data`
         data = {
@@ -395,6 +400,9 @@ def generate_balance_visual(company, selected_year, company_dataframe):
                         "Tradeand Other Payables Non Current",
                         "Long Term Provisions"
                         #"Preferred Securities Outside Stock Equity"
+                    ],
+                    "Total Deposits":[
+                        "Deposits"
                     ],
                     "Other Liabilities": [
                         "Other Liabilities"
@@ -638,19 +646,47 @@ def generate_equity_bond(company, selected_year, company_dataframe):
 
     return fig  # Returns only the figure (Dash-friendly)
 
+# Function to safely convert values to float
+def safe_float(value):
+    try:
+        return float(value) if value else 0.0
+    except ValueError:
+        return 0.0  # Return 0.0 if value can't be converted to float
 
-
-def load_data(ticker, years=['2021', '2022', '2023', '2024']):
-    # Fetch the data dynamically using yfinance
+# Main function to process the data
+def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
     ystock = yf.Ticker(ticker)
+    ##
+    filename = f"{ticker}_deposits.pkl"
 
+    # Dictionary to store the extracted values
+    variable_names = {}
+
+    try:
+        # Open and load the pickle file
+        with open(filename, "rb") as f:
+            data = pickle.load(f)  # Load the dictionary from the file
+
+        # Extract the required years from the loaded data
+        for year in years:
+            key = f"Deposits_{year}"
+            if key in data:
+                variable_names[key] = data[key]
+
+    except FileNotFoundError:
+        print(f"Warning: {filename} not found. Skipping...")
+    except Exception as e:
+        print(f"Error loading {filename}: {e}")
+
+
+    print(variable_names)
     # Fetch the financial data
     income_statement = ystock.incomestmt
 
     balance_sheet = ystock.balance_sheet
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
-    print(balance_sheet)
+    #print(balance_sheet)
     cashflow_statement = ystock.cashflow  # This fetches the cash flow statement
 
     # Fetch the stock's information (including shares outstanding)
@@ -768,7 +804,6 @@ def load_data(ticker, years=['2021', '2022', '2023', '2024']):
         'Cash Dividends Paid'
     }
 
-    variable_names = {}
     # loop through the years and each key for the income statement
     for year in years:
         for key in income_statement_keys:
@@ -792,13 +827,13 @@ def load_data(ticker, years=['2021', '2022', '2023', '2024']):
                     pretax_per_share = value / outstanding_shares
                     market_cap_calc = pretax_per_share * outstanding_shares
                     Equity_Bond = (pretax_per_share / current_price) * 100
-                    if isinstance(Equity_Bond, (np.ndarray, pd.Series)):
-                        if Equity_Bond.size == 1:
-                            print(f"Equity Bond for {ticker} {year}: {Equity_Bond.item()}%")
-                        else:
-                            print(f"Equity Bond for {ticker} {year}: Multiple values or missing data")
-                    else:
-                        print(f"Equity Bond for {ticker} {year}: {Equity_Bond}%")
+                    #if isinstance(Equity_Bond, (np.ndarray, pd.Series)):
+                        #if Equity_Bond.size == 1:
+                            #print(f"Equity Bond for {ticker} {year}: {Equity_Bond.item()}%")
+                        #else:
+                            #print(f"Equity Bond for {ticker} {year}: Multiple values or missing data")
+                    #else:
+                        #print(f"Equity Bond for {ticker} {year}: {Equity_Bond}%")
 
 
 
@@ -834,8 +869,9 @@ def load_data(ticker, years=['2021', '2022', '2023', '2024']):
             try:
                 value = balance_sheet.loc[key, year]
 
+
                 # Print the value for each key to debug
-                print(f"Processing {key} for {year}: {value}")
+                #print(f"Processing {key} for {year}: {value}")
 
                 # Store the value if it exists
                 if not value.empty:
@@ -846,30 +882,21 @@ def load_data(ticker, years=['2021', '2022', '2023', '2024']):
                 # Capture values for conditional logic
                 if key == 'Cash And Cash Equivalents':
                     cash_and_cash_equivalents = abs(value.iloc[0]) if pd.notna(value.iloc[0]) else 0
-                    print(f"Cash And Cash Equivalents for {year}: {cash_and_cash_equivalents}")
+                    #print(f"Cash And Cash Equivalents for {year}: {cash_and_cash_equivalents}")
 
                 if key == 'Cash Cash Equivalents And Short Term Investments':
                     cash_and_short_term_investments = abs(value.iloc[0]) if pd.notna(value.iloc[0]) else 0
-                    print(
-                        f"Cash Cash Equivalents And Short Term Investments for {year}: {cash_and_short_term_investments}")
+                    #print(
+                        #f"Cash Cash Equivalents And Short Term Investments for {year}: {cash_and_short_term_investments}")
 
                 if key == 'Other Short Term Investments':
                     other_short_term_investments = abs(value.iloc[0]) if pd.notna(value.iloc[0]) else 0
-                    print(f"Other Short Term Investments for {year}: {other_short_term_investments}")
-
-                # Sum up liabilities
-                if key in liabilities_keys:
-                    total_liabilities_calculated += abs(value.iloc[0]) if pd.notna(value.iloc[0]) else 0
-                    print(f"Updated Total Liabilities Calculated for {year}: {total_liabilities_calculated}")
-
-                # Capture total liabilities reported for comparison
-                if key == 'Total Liabilities Net Minority Interest':
-                    total_liabilities_reported = abs(value.iloc[0]) if pd.notna(value.iloc[0]) else 0
-                    print(f"Total Liabilities Reported for {year}: {total_liabilities_reported}")
+                    #print(f"Other Short Term Investments for {year}: {other_short_term_investments}")
 
             except KeyError:
                 variable_names[variable_name] = 0
                 print(f"KeyError for {key} in {year}, setting to 0")
+
 
         # Final conditional logic outside the loop
         # Handle "Cash And Cash Equivalents"
@@ -886,20 +913,7 @@ def load_data(ticker, years=['2021', '2022', '2023', '2024']):
             variable_names[
                 f"Other_Short_Term_Investments_{year}"] = other_short_term_investments if other_short_term_investments is not None else 0
 
-        # Handling the total liabilities discrepancy (if necessary)
-        if total_liabilities_reported is not None:
-            other_liabilities = total_liabilities_reported - total_liabilities_calculated
 
-            # Only create the variable if the difference is positive
-            if other_liabilities > 0:
-                variable_names[f"Other_Liabilities_{year}"] = other_liabilities
-                print(f"Other Liabilities for {year}: {other_liabilities}")
-
-        # Dynamically check if "Other Liabilities" exists
-        if f"Other_Liabilities_{year}" in variable_names:
-            print(f"Other Liabilities for {year} exists: {variable_names[f'Other_Liabilities_{year}']}")
-        else:
-            print(f"Other Liabilities for {year} does not exist")
 
         for key in cashflow_statement_keys:
             variable_name = f"{key.replace(' ', '_')}_{year}"  # Unique variable for each year
@@ -918,7 +932,7 @@ def load_data(ticker, years=['2021', '2022', '2023', '2024']):
                     variable_names[variable_name] = 0  # Default to 0 if NaN or empty
             except KeyError:
                 variable_names[variable_name] = 0  # Return 0 if key doesn't exist
-
+    #print(variable_names)
     return variable_names  # Return the dictionary with variable names and values
 
 
