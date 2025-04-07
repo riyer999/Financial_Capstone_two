@@ -13,7 +13,7 @@ from transformers import pipeline
 from yahooquery import Ticker
 from fuzzywuzzy import process
 
-from edgar import set_identity, Company
+#from edgar import set_identity, Company
 
 
 
