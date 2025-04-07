@@ -154,6 +154,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                     depreciation_amortization_depletion
                 ]
 
+
                 # Adjust colors based on negative values
                 if gross_profit_value < 0:
                     color_for_nodes[1] = 'red'  # Gross Profit node turns red
@@ -167,17 +168,21 @@ def generate_sankey(company, selected_year, company_dataframe):
                     color_for_nodes[5] = 'red'  # Net Profit node turns red
                     color_for_links[4] = 'red'  # Link from Operating Profit to Net Profit turns red
 
-                value = [
-                    v if v > 0 else 1e-6  # If v is 0, set it to 1e-6
-                    for v in [
-                        gross_profit_value, cost_revenue, operating_income, operating_expense,
-                        net_income, tax_provision, other, sga, other_operating_expenses, rnd, depreciation_amortization_depletion
-                    ]
-                ]
+                #value = [
+                    #v if v > 0 else 1e-6  # If v is 0, set it to 1e-6
+                    #for v in [
+                        #gross_profit_value, cost_revenue, operating_income, operating_expense,
+                        #net_income, tax_provision, other, sga, other_operating_expenses, rnd, depreciation_amortization_depletion
+                    #]
+                #]
 
+                nodes_to_remove = [i for i, v in enumerate(value) if v == 0]
 
+                filtered_source = [s for i, s in enumerate(source) if i not in nodes_to_remove]
+                filtered_target = [t for i, t in enumerate(target) if i not in nodes_to_remove]
+                filtered_value = [v for i, v in enumerate(value) if i not in nodes_to_remove]
 
-                link = dict(source=source, target=target, value=value, color=color_link)
+                link = dict(source=filtered_source, target=filtered_target, value=filtered_value, color=color_link)
                 node = dict(label=label, pad=35, thickness=20)
                 data = go.Sankey(link=link, node=node)
 
