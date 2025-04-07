@@ -687,7 +687,7 @@ def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
     balance_sheet = ystock.balance_sheet
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
-    #print(balance_sheet)
+    print(balance_sheet)
     cashflow_statement = ystock.cashflow  # This fetches the cash flow statement
 
     # Fetch the stock's information (including shares outstanding)
