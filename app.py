@@ -254,7 +254,7 @@ def generate_sankey(company, selected_year, company_dataframe):
 
                 sankey_fig.update_layout(
                     hovermode='x',
-                    title="<span style='font-size:36px;color:white;'><b>Income Statement</b></span>",
+                    title=f"<span style='font-size:36px;color:white;'><b>Income Statement</b></span>",
                     font=dict(size=10, color='white'),
                     paper_bgcolor='#121212',  # Black background
                     plot_bgcolor='#121212',   # Black plot background
@@ -274,7 +274,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                     fig.add_trace(trace, row=1, col=1)
 
                 fig.update_layout(
-                    title_text="Income Statement",
+                    title_text=f"Income Statement Visual for {ticker} ({selected_year})",
                     paper_bgcolor='#0c0c0d',
                     font=dict(color='white')
                 )
@@ -412,7 +412,16 @@ def generate_balance_visual(company, selected_year, company_dataframe):
                     ],
                     "Other Liabilities": [
                         "Other Liabilities"
+                    ],
+                    "Policy Holders liabilities":[
+                        "LiabilityForClaimsAndClaimsAdjustmentExpensePropertyCasualtyLiability",
+                        "LiabilityForFuturePolicyBenefits",
+                        "PolicyholderContractDeposits",
+                        "UnearnedPremiums",
+                        "ClaimPaymentsOutstanding",
+                        "AccruedLiabilitiesAndOtherLiabilities"
                     ]
+
                 },
                 "Total Equity": {
                     "Equity": [
@@ -435,7 +444,7 @@ def generate_balance_visual(company, selected_year, company_dataframe):
                         value = financial_metrics.get(metric_key, 0) / 1e9  # Convert to billions for visualization
 
                         # Append data for treemap
-                        data["root"].append("Balance Sheet")  # Add root node
+                        data["root"].append(f"Balance Sheet Visual for {ticker} ({selected_year})")  # Add root node
                         data["category"].append(category)
                         data["subcategory"].append(subcategory)
                         data["type"].append(type_)
@@ -553,7 +562,7 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
 
         # Update layout to set static y-axis range
         cash_fig.update_layout(
-            title_text=f"Cash Flow for {ticker}",
+            title_text=f"Cash Flow Visual for {ticker} ({selected_year})",
             xaxis_title="",
             yaxis_title="Money in Billions of Dollars",
             showlegend=False,
@@ -642,7 +651,7 @@ def generate_equity_bond(company, selected_year, company_dataframe):
     ))
 
     fig.update_layout(
-        title=f"Equity Bond Yield for {company_name} ({selected_year})",
+        title=f"Equity Bond Yield Visual for {ticker} ({selected_year})",
         xaxis_title="Year",
         yaxis_title="Equity Bond Yield (%)",
         #yaxis=dict(range=[0, max(equity_bond_yield * 1.2, 5)]),  # Ensure readable scale
@@ -662,8 +671,11 @@ def safe_float(value):
 # Main function to process the data
 def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
     ystock = yf.Ticker(ticker)
-    ##
-    filename = f"{ticker}_deposits.pkl"
+    ## define the path
+    directory_path = "pkl_files"  # Replace with your directory path
+
+    # Combine the directory path and filename to get the full path
+    filename = os.path.join(directory_path, f"{ticker}_financials.pkl")
 
     # Dictionary to store the extracted values
     variable_names = {}
@@ -674,10 +686,11 @@ def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
             data = pickle.load(f)  # Load the dictionary from the file
 
         # Extract the required years from the loaded data
-        for year in years:
-            key = f"Deposits_{year}"
-            if key in data:
-                variable_names[key] = data[key]
+        for concept in data:
+            # Check if the concept contains a year, then add it to the dictionary
+            for year in years:
+                if f"_{year}" in concept:
+                    variable_names[concept] = data[concept]
 
     except FileNotFoundError:
         print(f"Warning: {filename} not found. Skipping...")
@@ -1022,7 +1035,7 @@ def create_treemap():
 # Assuming treemap_df and nasdaq_df exist with relevant data
 def get_company_ticker(company_name, treemap_df, nasdaq_df):
     # Normalize input company name
-    """
+    """\\
     company_name_normalized = company_name.strip().lower()
 
     # Function to find the best match in a DataFrame

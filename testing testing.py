@@ -1,8 +1,12 @@
 import pickle
+import os
 
 # Define the ticker to match the saved file
 ticker = "ALL"
-filename = f"{ticker}_financials.pkl"
+directory_path = "pkl_files"  # Replace with your directory path
+
+# Combine the directory path and filename to get the full path
+filename = os.path.join(directory_path, f"{ticker}_financials.pkl")
 
 # Load the dictionary from the pickle file
 with open(filename, "rb") as f:
