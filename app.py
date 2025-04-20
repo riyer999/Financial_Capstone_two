@@ -21,6 +21,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
     {"name": "viewport", "content": "width=device-width, initial-scale=1"}
 ])
 server = app.server
+
 cache_file = 'sp500_company.csv'
 
 def generate_sankey(company, selected_year, company_dataframe):
@@ -1036,7 +1037,7 @@ def create_treemap():
 # Assuming treemap_df and nasdaq_df exist with relevant data
 def get_company_ticker(company_name, treemap_df, nasdaq_df):
     # Normalize input company name
-    """\\
+
     company_name_normalized = company_name.strip().lower()
 
     # Function to find the best match in a DataFrame
@@ -1052,7 +1053,7 @@ def get_company_ticker(company_name, treemap_df, nasdaq_df):
     ticker = search_dataframe(treemap_df) or search_dataframe(nasdaq_df)
     return ticker
 
-    """
+
     return None
 def get_company_summary(company_name, treemap_df, nasdaq_df):
     # Get the ticker dynamically
@@ -1068,13 +1069,13 @@ def get_company_summary(company_name, treemap_df, nasdaq_df):
 
 
 # Summarization setup
-#nltk.download('punkt')
-#summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+nltk.download('punkt')
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
 
 def simple_summarizer(text):
 
-   # return summarizer(text, max_length=150, min_length=30, do_sample=False)[0]['summary_text']
+    return summarizer(text, max_length=150, min_length=30, do_sample=False)[0]['summary_text']
     return None
 
 # Step 1: Read the file into a DataFrame
@@ -1539,6 +1540,6 @@ def update_equity_bond(pathname, slider_value):
     return go.Figure()
 
 if __name__ == "__main__":
-    
-    app.run_server(debug=True, port=8060)
+    pass
+
 
