@@ -21,7 +21,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
     {"name": "viewport", "content": "width=device-width, initial-scale=1"}
 ])
 server = app.server
-cache_file = 'market_cap_cache.csv'
+cache_file = 'sp500_company.csv'
 
 def generate_sankey(company, selected_year, company_dataframe):
     # Extract the company name from the company (strip "/item/" part)
@@ -1077,7 +1077,7 @@ def simple_summarizer(text):
     return None
 
 # Step 1: Read the file into a DataFrame
-file_path = 'us_official_nasdaq.csv'  # Replace with the path to your file
+file_path = 'sp500_company.csv'  # Replace with the path to your file
 nasdaq_df = pd.read_csv(file_path)
 nasdaq_df = pd.read_csv(file_path, dtype={'MarketCap': float}, low_memory=False)
 
