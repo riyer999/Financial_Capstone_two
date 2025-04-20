@@ -200,6 +200,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                     return (numerator / denominator) * 100 if denominator and abs(denominator) > 1e-9 else 0
 
                 gross_margin_percentage = safe_divide(gross_profit_value, total_revenue)
+                other_percentage = safe_divide(other, total_revenue)
                 sga_margin_percentage = safe_divide(sga, gross_profit_value)
                 net_profit_margin = safe_divide(net_income, total_revenue)
                 cost_revenue_margin = safe_divide(cost_revenue, total_revenue)
@@ -226,7 +227,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                     # Operating Expenses
                     f"Net Profit: {net_income:.2f}B<br>Percentage of Revenue: {net_profit_margin:.2f}%",  # Net Profit
                     f"Tax: {tax_provision:.2f}B<br>Percentage of Revenue: {tax_provision_margin:.2f}%",  # Tax
-                    "",  # Other
+                    f"Other Expenses: {other:.2f}B<br>Percentage of Revenue: {other_percentage:.2f}%",
                     f"SG&A: {sga:.2f}B<br>Percentage of Gross Profit: {sga_margin_percentage:.2f}%",
                     f"Other Expenses: {other_operating_expenses:.2f}{unit}<br>Percentage of Gross Profit: {other_operating_expenses_percentage:.2f}%",  # Other Expenses
                     f"R&D: {rnd:.2f}B<br>Percentage of Gross Profit: {rnd_margin_percentage:.2f}%",
