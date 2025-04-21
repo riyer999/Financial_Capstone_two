@@ -1,4 +1,3 @@
-import nltk
 import yfinance as yf
 import pandas as pd
 import os
@@ -9,13 +8,10 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
-from transformers import pipeline
 from yahooquery import Ticker
-from fuzzywuzzy import process
-
-#from edgar import set_identity, Company
 
 
+#test1
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
     {"name": "viewport", "content": "width=device-width, initial-scale=1"}
@@ -1042,19 +1038,16 @@ def get_company_ticker(company_name, treemap_df, nasdaq_df):
 
     # Function to find the best match in a DataFrame
     def search_dataframe(df):
-        company_names = df['Company'].str.strip().str.lower().tolist()
-        best_match, score = process.extractOne(company_name_normalized, company_names)
-        if score > 85:  # Adjust threshold as needed
-            matched_ticker = df.loc[df['Company'].str.strip().str.lower() == best_match, 'Ticker']
-            return matched_ticker.values[0] if not matched_ticker.empty else None
-        return None
+        df['Normalized_Company'] = df['Company'].str.strip().str.lower()
+        matched_tickers = df[df['Normalized_Company'] == company_name_normalized]['Ticker']
+        return matched_tickers.values[0] if not matched_tickers.empty else None
 
-    # Search in treemap_df first, then fallback to nasdaq_df
+        # Check treemap_df first, then fallback to nasdaq_df
+
     ticker = search_dataframe(treemap_df) or search_dataframe(nasdaq_df)
     return ticker
 
 
-    return None
 def get_company_summary(company_name, treemap_df, nasdaq_df):
     # Get the ticker dynamically
     ticker = get_company_ticker(company_name, treemap_df, nasdaq_df)
@@ -1064,19 +1057,12 @@ def get_company_summary(company_name, treemap_df, nasdaq_df):
     # Fetch company summary
     stock = Ticker(ticker)
     summary = stock.asset_profile.get(ticker, {}).get('longBusinessSummary', 'Summary not available.')
-
     return summary
 
 
-# Summarization setup
-nltk.download('punkt')
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-
-
 def simple_summarizer(text):
-
-    return summarizer(text, max_length=150, min_length=30, do_sample=False)[0]['summary_text']
-    return None
+    # Placeholder for future summarization
+    return text
 
 # Step 1: Read the file into a DataFrame
 file_path = 'sp500_company.csv'  # Replace with the path to your file
@@ -1539,7 +1525,12 @@ def update_equity_bond(pathname, slider_value):
         return generate_equity_bond(pathname, selected_year, nasdaq_df)
     return go.Figure()
 
+
+
+
 if __name__ == "__main__":
-    pass
+
+    app.run_server(debug=True, port=8060)
+
 
 
