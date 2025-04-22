@@ -234,7 +234,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                 ]
 
                 sankey_fig = go.Figure(data=[go.Sankey(
-                    textfont=dict(color="black", size=10),
+                    textfont=dict(color="white", size=10), #black
                     node=dict(
                         pad= 12, #from 35
                         line=dict(color="white", width=1),
@@ -1140,7 +1140,7 @@ app.layout = dbc.Container([
                 id="autocomplete-dropdown",
                 options=autocomplete_options,
                 placeholder="Search Company...",
-                style={'width': '100%', 'backgroundColor': '#333333', 'color': '#000000'},
+                style={'width': '100%', 'backgroundColor': '#FFFFFC', 'color': '#000000'},
                 searchable=True,
                 multi=False,
             ),
