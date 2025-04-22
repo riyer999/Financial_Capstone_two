@@ -524,21 +524,42 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
                     max_value = max(max_value, financial_metrics_all_years[year_key])
 
         # Prepare data for the selected year
+        op_cash_flow = financial_metrics_all_years.get(f'Operating_Cash_Flow_{selected_year}', 0)
+        issuance_debt = financial_metrics_all_years.get(f'Issuance_Of_Debt_{selected_year}', 0)
+
+        capital_expenditure = abs(financial_metrics_all_years.get(f'Capital_Expenditure_{selected_year}', 0))
+        repayment_debt = abs(financial_metrics_all_years.get(f'Repayment_Of_Debt_{selected_year}', 0))
+        repurchase_stock = abs(financial_metrics_all_years.get(f'Repurchase_Of_Capital_Stock_{selected_year}', 0))
+        dividends_paid = abs(financial_metrics_all_years.get(f'Cash_Dividends_Paid_{selected_year}', 0))
+
+        money_in_categories = []
+        money_in_values = []
+        money_out_categories = []
+        money_out_values = []
+
+        if op_cash_flow >= 0:
+            money_in_categories.append('Operating Cash Flow')
+            money_in_values.append(op_cash_flow)
+        else:
+            money_out_categories.append('Operating Cash Flow')
+            money_out_values.append(abs(op_cash_flow))  # Make it positive for plotting
+
+        money_in_categories.append('Issuance Of Debt')
+        money_in_values.append(issuance_debt)
+
+        money_out_categories.extend([
+            'Capital Expenditure', 'Repayment Of Debt', 'Repurchase Of Capital Stock', 'Cash Dividends Paid'
+        ])
+        money_out_values.extend([
+            capital_expenditure, repayment_debt, repurchase_stock, dividends_paid
+        ])
+
         year_data = {
             'Year': selected_year,
-            'Category1': ['Operating Cash Flow', 'Issuance Of Debt'],
-            'Value1': [
-                financial_metrics_all_years.get(f'Operating_Cash_Flow_{selected_year}', 0),
-                financial_metrics_all_years.get(f'Issuance_Of_Debt_{selected_year}', 0)
-            ],
-            'Category2': ['Capital Expenditure', 'Repayment Of Debt', 'Repurchase Of Capital Stock',
-                          'Cash Dividends Paid'],
-            'Value2': [
-                financial_metrics_all_years.get(f'Capital_Expenditure_{selected_year}', 0),
-                financial_metrics_all_years.get(f'Repayment_Of_Debt_{selected_year}', 0),
-                financial_metrics_all_years.get(f'Repurchase_Of_Capital_Stock_{selected_year}', 0),
-                financial_metrics_all_years.get(f'Cash_Dividends_Paid_{selected_year}', 0)
-            ]
+            'Category1': money_in_categories,
+            'Value1': money_in_values,
+            'Category2': money_out_categories,
+            'Value2': money_out_values
         }
 
         # Create subplots
@@ -697,16 +718,16 @@ def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
         print(f"Error loading {filename}: {e}")
 
 
-    print(variable_names)
+    #print(variable_names)
     # Fetch the financial data
     income_statement = ystock.incomestmt
 
     balance_sheet = ystock.balance_sheet
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
-    print(balance_sheet)
+    #print(balance_sheet)
     cashflow_statement = ystock.cashflow  # This fetches the cash flow statement
-
+    print(cashflow_statement)
     # Fetch the stock's information (including shares outstanding)
     stock_info = ystock.info
     outstanding_shares = stock_info.get('sharesOutstanding')
@@ -913,7 +934,7 @@ def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
 
             except KeyError:
                 variable_names[variable_name] = 0
-                print(f"KeyError for {key} in {year}, setting to 0")
+                #print(f"KeyError for {key} in {year}, setting to 0")
 
 
         # Final conditional logic outside the loop
@@ -941,11 +962,11 @@ def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
                 # Check if the value exists (it should not be empty or NaN)
                 if isinstance(value, pd.Series):
                     if not value.empty:
-                        variable_names[variable_name] = abs(value.values[0])  # Use .values[0] to get the scalar
+                        variable_names[variable_name] = (value.values[0])  # Use .values[0] to get the scalar
                     else:
                         variable_names[variable_name] = 0  # Default to 0 if the value is empty
                 elif pd.notna(value):  # Handle the case where it's not NaN
-                    variable_names[variable_name] = abs(value)  # It's already a scalar
+                    variable_names[variable_name] = (value)  # It's already a scalar
                 else:
                     variable_names[variable_name] = 0  # Default to 0 if NaN or empty
             except KeyError:
