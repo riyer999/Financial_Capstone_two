@@ -627,11 +627,11 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
 
 
 def generate_equity_bond(company, selected_year, company_dataframe):
-    """Generates the equity bond yield visualization for a given company and year."""
+    """Generates the equity bond yield visualization for a given company and year with static y-axis."""
 
     if not company or not selected_year:
         print("DEBUG: Missing company or year")
-        return go.Figure()  # Return an empty figure if inputs are invalid
+        return go.Figure()
 
     # Extract and normalize company name
     company_name = company.split('/')[-1] if company.startswith('/item/') else company
@@ -646,62 +646,65 @@ def generate_equity_bond(company, selected_year, company_dataframe):
         return go.Figure()
 
     ticker = matched_tickers.values[0]
-    
-    # Load financial data for the selected year
-    financial_metrics = load_data(ticker, years=[selected_year])
+
+    # Load financial data for multiple years to normalize axis
+    years = ['2021', '2022', '2023', '2024']
+    financial_metrics_all_years = load_data(ticker, years=years)
     stock = yf.Ticker(ticker)
     stock_info = stock.info
 
-    # Retrieve necessary financial values
-    pretax_income = financial_metrics.get(f'Pretax_Income_{selected_year}', 0)
     shares_outstanding = stock_info.get('sharesOutstanding', None)
     stock_price = stock_info.get('currentPrice', None)
 
-    # Debugging missing values
-    #if pretax_income == 0:
-    #    print(f"DEBUG: Pretax income is missing for {ticker} in {selected_year}")
-    #if not shares_outstanding:
-    #    print(f"DEBUG: Shares outstanding is missing for {ticker}")
-    #if not stock_price:
-    #    print(f"DEBUG: Stock price is missing for {ticker}")
-
-    # Ensure valid values before calculation
-    if pretax_income == 0 or not shares_outstanding or not stock_price:
-        print(f"DEBUG: Missing data for {ticker} in {selected_year}")
+    if not shares_outstanding or not stock_price:
+        print(f"DEBUG: Missing shares or price for {ticker}")
         return go.Figure()
 
-    # Calculate Pretax Income Per Share
-    pretax_per_share = pretax_income / shares_outstanding
-    equity_bond_yield = (pretax_per_share / stock_price) * 100  # Convert to percentage
+    # Calculate equity bond yields across all years
+    yields = []
+    for year in years:
+        pretax_income = financial_metrics_all_years.get(f'Pretax_Income_{year}', 0)
+        if pretax_income != 0:
+            pretax_per_share = pretax_income / shares_outstanding
+            yield_pct = (pretax_per_share / stock_price) * 100
+            yields.append(yield_pct)
 
-    print(f"DEBUG: {ticker} {selected_year} - Equity Bond Yield: {equity_bond_yield:.2f}%")
+    if not yields:
+        print(f"DEBUG: No yield values for {ticker}")
+        return go.Figure()
 
-    # Determine graph color
+    # Fix y-axis range based on all years
+    y_min = min(min(yields) * 1.2, -5) if min(yields) < 0 else 0
+    y_max = max(max(yields) * 1.2, 5)
+
+    # Use the selected year value for the bar
+    pretax_income_selected = financial_metrics_all_years.get(f'Pretax_Income_{selected_year}', 0)
+    if pretax_income_selected == 0:
+        print(f"DEBUG: Missing pretax income for selected year {selected_year}")
+        return go.Figure()
+
+    equity_bond_yield = (pretax_income_selected / shares_outstanding / stock_price) * 100
     bar_color = 'red' if equity_bond_yield < 0 else 'green'
 
-    # Determine y-axis range
-    y_min = min(equity_bond_yield * 1.2, -5) if equity_bond_yield < 0 else 0
-    y_max = max(equity_bond_yield * 1.2, 5)
-
-    # Create bar chart
+    # Plot
     fig = go.Figure(go.Bar(
         x=[selected_year],
         y=[equity_bond_yield],
         text=[f"{equity_bond_yield:.2f}%"],
         textposition='outside',
-        marker_color= bar_color
+        marker_color=bar_color
     ))
 
     fig.update_layout(
         title=f"Equity Bond Yield Visual for {ticker} ({selected_year})",
         xaxis_title="Year",
         yaxis_title="Equity Bond Yield (%)",
-        #yaxis=dict(range=[0, max(equity_bond_yield * 1.2, 5)]),  # Ensure readable scale
-        yaxis=dict(range=[y_min, y_max]),  # Allow negative values
+        yaxis=dict(range=[y_min, y_max]),
         template="plotly_dark"
     )
 
-    return fig  # Returns only the figure (Dash-friendly)
+    return fig
+
 
 # Function to safely convert values to float
 def safe_float(value):
@@ -1410,7 +1413,7 @@ def display_page(pathname, compare_value):
             # Bottom graph
             dbc.Row([
                 dbc.Col(dcc.Graph(id='company-balance-graphic', style={'height': '500px', 'width': '100%'}), width=6),
-                dbc.Col(dcc.Graph(id='equity-bond-graph', style={'height': '500px', 'width': '100%'}), width=6)
+                dbc.Col(dcc.Graph(id='equity-bond-graph', style={'height': '500px', 'width': '100%'}), width=3)
             ], style={'width': '100%'}),
 
             # Back Button
