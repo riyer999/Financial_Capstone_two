@@ -501,13 +501,14 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
         ticker = matched_tickers.values[0]
 
         # Load only relevant cash flow statement data
-        financial_metrics_all_years = load_data(ticker, years=['2021', '2022', '2023',
-                                                               '2024'])  # Load data for all years
+        financial_metrics_all_years = load_data(ticker,
+                                                years=['2021', '2022', '2023', '2024'])  # Load data for all years
 
         # Extract only the cash flow statement-related keys
         cash_flow_keys = [
             'Operating_Cash_Flow', 'Issuance_Of_Debt', 'Capital_Expenditure',
-            'Repayment_Of_Debt', 'Repurchase_Of_Capital_Stock', 'Cash_Dividends_Paid'
+            'Repayment_Of_Debt', 'Repurchase_Of_Capital_Stock', 'Cash_Dividends_Paid',
+            'Sale_Of_Investment', 'Issuance_Of_Capital_Stock', 'Purchase_Of_Investment'
         ]
 
         # Initialize max_value for scaling the y-axis
@@ -532,11 +533,18 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
         repurchase_stock = abs(financial_metrics_all_years.get(f'Repurchase_Of_Capital_Stock_{selected_year}', 0))
         dividends_paid = abs(financial_metrics_all_years.get(f'Cash_Dividends_Paid_{selected_year}', 0))
 
+        sale_of_investment = abs(financial_metrics_all_years.get(f'Sale_Of_Investment_{selected_year}', 0))
+        issuance_of_capital_stock = abs(
+            financial_metrics_all_years.get(f'Issuance_Of_Capital_Stock_{selected_year}', 0))
+        purchase_of_investment = abs(financial_metrics_all_years.get(f'Purchase_Of_Investment_{selected_year}', 0))
+
+        # Create lists for inflows and outflows
         money_in_categories = []
         money_in_values = []
         money_out_categories = []
         money_out_values = []
 
+        # Operating cash flow: inflow or outflow based on value
         if op_cash_flow >= 0:
             money_in_categories.append('Operating Cash Flow')
             money_in_values.append(op_cash_flow)
@@ -544,14 +552,26 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
             money_out_categories.append('Operating Cash Flow')
             money_out_values.append(abs(op_cash_flow))  # Make it positive for plotting
 
+        # Issuance of debt as inflow
         money_in_categories.append('Issuance Of Debt')
         money_in_values.append(issuance_debt)
 
+        # New inflows
+        if sale_of_investment > 0:
+            money_in_categories.append('Sale Of Investment')
+            money_in_values.append(sale_of_investment)
+
+        if issuance_of_capital_stock > 0:
+            money_in_categories.append('Issuance Of Capital Stock')
+            money_in_values.append(issuance_of_capital_stock)
+
+        # Outflows
         money_out_categories.extend([
-            'Capital Expenditure', 'Repayment Of Debt', 'Repurchase Of Capital Stock', 'Cash Dividends Paid'
+            'Capital Expenditure', 'Repayment Of Debt', 'Repurchase Of Capital Stock', 'Cash Dividends Paid',
+            'Purchase Of Investment'
         ])
         money_out_values.extend([
-            capital_expenditure, repayment_debt, repurchase_stock, dividends_paid
+            capital_expenditure, repayment_debt, repurchase_stock, dividends_paid, purchase_of_investment
         ])
 
         year_data = {
@@ -588,14 +608,16 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
             showlegend=False,
             font=dict(color='white', size=14),
             paper_bgcolor='#121212',  # Black background
-            plot_bgcolor='#121212',   # Black plot background
-            
+            plot_bgcolor='#121212',  # Black plot background
+
             xaxis=dict(
                 tickmode='array',
                 tickvals=['Operating Cash Flow', 'Issuance Of Debt', 'Capital Expenditure', 'Repayment Of Debt',
-                          'Repurchase Of Capital Stock'],
+                          'Repurchase Of Capital Stock', 'Sale Of Investment', 'Issuance Of Capital Stock',
+                          'Purchase Of Investment'],
                 ticktext=['Operating Cash Flow', 'Issuance Of Debt', 'Capital Expenditure', 'Repayment Of Debt',
-                          'Repurchase Of Capital Stock']
+                          'Repurchase Of Capital Stock', 'Sale Of Investment', 'Issuance Of Capital Stock',
+                          'Purchase Of Investment']
             ),
             yaxis=dict(range=[0, max_value * 1.1]),  # Static y-axis range across all years
             yaxis2=dict(range=[0, max_value * 1.1])  # Same for the second y-axis
@@ -837,10 +859,16 @@ def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
     cashflow_statement_keys = {
         'Operating Cash Flow',
         'Issuance Of Debt',
+        'Sale Of Investment', # new
+        'Issuance of Capital Stock', # new
+
         'Capital Expenditure',
         'Repayment Of Debt',
         'Repurchase Of Capital Stock',
-        'Cash Dividends Paid'
+        'Cash Dividends Paid',
+        'Purchase Of Investment' # new
+
+
     }
 
     # loop through the years and each key for the income statement
