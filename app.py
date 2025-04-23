@@ -1197,7 +1197,7 @@ app.layout = dbc.Container([
                 labelCheckedClassName="btn btn-light",
                 options=[
                     {"label": "Home", "value": 1},
-                    {"label": "Compare", "value": 2}
+                    {"label": "About", "value": 2} #changing compare to about
                 ],
                 value=1,
                 id='compare-button',
@@ -1263,7 +1263,7 @@ def generate_graph(company_name, selected_year):
     return generate_sankey(company_name, selected_year, treemap_df) #new concise way of calling the sankey code
 
 compare_page_layout = html.Div([
-    html.H1("Compare Companies"),
+    html.H1("About Us"),
     #html.P("Here you can compare different companies."),
 
     # Wrapper for the two columns
