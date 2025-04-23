@@ -67,9 +67,9 @@ def generate_sankey(company, selected_year, company_dataframe):
                 salaries_and_wages = financial_metrics.get(f'Salaries_And_Wages_{selected_year}', 0) / scale_factor
                 professional_expenses = financial_metrics.get(f'Professional_Expense_And_Contract_Services_Expense_{selected_year}', 0) / scale_factor
                 other_non_interest = financial_metrics.get(f'Other_Non_Interest_Expense_{selected_year}', 0) / scale_factor
-                
+
                 non_interest_expense = (selling_and_marketing_expense + occupancy_and_equipment + salaries_and_wages + professional_expenses + other_non_interest)
-                
+
                 # gross profit should be the total revenue - the cost of revenues but cost of revenues is hard to get
                 interest_expense = financial_metrics.get(f'Interest_Expense_{selected_year}', 0) / scale_factor
                 gross_profit_bank = total_revenue - interest_expense
@@ -77,7 +77,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                 if gross_profit_value is None or gross_profit_value == 0:
                     gross_profit_value = gross_profit_bank
 
-                
+
                 # interest expense is only one thing that goes into it - its a sort of placeholder
                 cost_revenue = financial_metrics.get(f'Cost_Of_Revenue_{selected_year}', None) / scale_factor
                 if cost_revenue is None or cost_revenue == 0:
@@ -88,14 +88,14 @@ def generate_sankey(company, selected_year, company_dataframe):
                 operating_income_bank = tax_provision + net_income
                 if operating_income is None or operating_income == 0:
                     operating_income = operating_income_bank
-                
-                
+
+
                 # most of the issues lie here - hardly any of these are in yfinance api
                 operating_expense = financial_metrics.get(f'Operating_Expense_{selected_year}', None) / scale_factor
                 if operating_expense is None or operating_expense == 0:
                     operating_expense = non_interest_expense
 
-                
+
 
                 ###################################################
                 color_link = ['#000000', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',
@@ -273,7 +273,7 @@ def generate_sankey(company, selected_year, company_dataframe):
                     fig.add_trace(trace, row=1, col=1)
 
                 fig.update_layout(
-                    title_text=f"Income Statement Visual for {ticker} ({selected_year})",
+                    title_text=f"Income Statement for {ticker} ({selected_year})",
                     paper_bgcolor='#0c0c0d',
                     font=dict(color='white')
                 )
@@ -443,7 +443,7 @@ def generate_balance_visual(company, selected_year, company_dataframe):
                         value = financial_metrics.get(metric_key, 0) / 1e9  # Convert to billions for visualization
 
                         # Append data for treemap
-                        data["root"].append(f"Balance Sheet Visual for {ticker} ({selected_year})")  # Add root node
+                        data["root"].append(f"Balance Sheet for {ticker} ({selected_year})")  # Add root node
                         data["category"].append(category)
                         data["subcategory"].append(subcategory)
                         data["type"].append(type_)
@@ -474,8 +474,8 @@ def generate_balance_visual(company, selected_year, company_dataframe):
         # Update layout
         balance_fig.update_layout(
         margin=dict(t=50, l=50, r=50, b=50),
-        paper_bgcolor='#121212',  # Black background
-        plot_bgcolor='#121212',   # Black plot background
+        paper_bgcolor='#0c0c0d',  # Black background
+        plot_bgcolor='#0c0c0d',   # Black plot background
         font=dict(color='white')  # White font
         )
 
@@ -602,13 +602,13 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
 
         # Update layout to set static y-axis range
         cash_fig.update_layout(
-            title_text=f"Cash Flow Visual for {ticker} ({selected_year})",
+            title_text=f"Cash Flow Statement for {ticker} ({selected_year})",
             xaxis_title="",
             yaxis_title="Money in Billions of Dollars",
             showlegend=False,
             font=dict(color='white', size=14),
-            paper_bgcolor='#121212',  # Black background
-            plot_bgcolor='#121212',  # Black plot background
+            paper_bgcolor='#0c0c0d',  # Black background
+            plot_bgcolor='#0c0c0d',  # Black plot background
 
             xaxis=dict(
                 tickmode='array',
@@ -628,6 +628,9 @@ def generate_cashflow_visual(company, selected_year, company_dataframe):
 
 def generate_equity_bond(company, selected_year, company_dataframe):
     """Generates the equity bond yield visualization for a given company and year with static y-axis."""
+
+    # Hardcoded average S&P 500 equity bond yields
+    sp500_avg_yields = {'2021': 5.22, '2022': 4.82, '2023': 4.85, '2024': 5.41}
 
     if not company or not selected_year:
         print("DEBUG: Missing company or year")
@@ -673,57 +676,74 @@ def generate_equity_bond(company, selected_year, company_dataframe):
         print(f"DEBUG: No yield values for {ticker}")
         return go.Figure()
 
-    # Fix y-axis range based on all years
+    # Fix y-axis range
     y_min = min(min(yields) * 1.2, -5) if min(yields) < 0 else 0
-    y_max = max(max(yields) * 1.2, 5)
+    y_max = max(max(yields + list(sp500_avg_yields.values())) * 1.2, 5)
 
-    # Use the selected year value for the bar
+    # Selected year yield
     pretax_income_selected = financial_metrics_all_years.get(f'Pretax_Income_{selected_year}', 0)
     if pretax_income_selected == 0:
         print(f"DEBUG: Missing pretax income for selected year {selected_year}")
         return go.Figure()
 
     equity_bond_yield = (pretax_income_selected / shares_outstanding / stock_price) * 100
-    bar_color = 'red' if equity_bond_yield < 0 else 'green'
 
-    # Plot
-    fig = go.Figure(go.Bar(
+    # Plot both company and S&P 500
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(
+        name=f"{ticker}",
         x=[selected_year],
         y=[equity_bond_yield],
         text=[f"{equity_bond_yield:.2f}%"],
         textposition='outside',
-        marker_color=bar_color
+        marker_color='green' if equity_bond_yield >= 0 else 'red'
     ))
 
+    fig.add_trace(go.Bar(
+        name='S&P 500 Avg',
+        x=[selected_year],
+        y=[sp500_avg_yields[selected_year]],
+        text=[f"{sp500_avg_yields[selected_year]:.2f}%"],
+        textposition='outside',
+        marker_color='white'
+    ))
+
+    # Add dotted bond yield line
     fig.add_shape(
         type='line',
-        x0=0, x1=1,  # Use full plot width
+        x0=0, x1=1,
         y0=4.4, y1=4.4,
         xref='paper',
         yref='y',
-        line=dict(color='white', dash='dash'),
+        line=dict(color='red', dash='dash'),
+        layer='above'  # Ensures it renders on top of bars
     )
 
-    # Optional: Add annotation to label it
     fig.add_annotation(
         x=1,
-        y=4.55,  # Slightly above the line
+        y=4.55,
         xref='paper',
         yref='y',
         text='10Y Gov Bond (4.40%)',
         showarrow=False,
-        font=dict(color='white')
+        font=dict(color='red')
     )
 
+    # Layout
     fig.update_layout(
-        title=f"Equity Bond Yield Visual for {ticker} ({selected_year})",
+        title=f"Equity Bond Yield: {ticker} vs S&P 500 Avg ({selected_year})",
         xaxis_title="Year",
         yaxis_title="Equity Bond Yield (%)",
         yaxis=dict(range=[y_min, y_max]),
-        template="plotly_dark"
+        barmode='group',
+        paper_bgcolor='#0c0c0d',  # Black background
+        template="plotly_dark",
+        legend=dict(x=0.5, xanchor="center", y=1.15, orientation="h")
     )
 
     return fig
+
 
 
 # Function to safely convert values to float
@@ -883,7 +903,7 @@ def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
         'Operating Cash Flow',
         'Issuance Of Debt',
         'Sale Of Investment', # new
-        'Issuance of Capital Stock', # new
+        'Issuance Of Capital Stock', # new
 
         'Capital Expenditure',
         'Repayment Of Debt',
@@ -1166,7 +1186,7 @@ app.layout = dbc.Container([
                 html.Span("Visualization of Company Financials")
             ], style={'color': '#e6e6e6'}),
             html.P("Search or Click on a Company to view their financials!", style={'color': '#cccccc', 'font-size': '18px'})
-        ], style={"vertical-align": "top", "height": 320}),  
+        ], style={"vertical-align": "top", "height": 320}),
 
         # Buttons Section with Fixed Spacing
         html.Div([
@@ -1202,7 +1222,7 @@ app.layout = dbc.Container([
     # Main Content Area
     html.Div(id='page-content', style={'width': 890, 'margin': 40})
 
-], fluid=True, style={'display': 'flex', 'backgroundColor': '#010103'}) 
+], fluid=True, style={'display': 'flex', 'backgroundColor': '#010103'})
 
 # Define page layouts
 main_page_layout = html.Div([
@@ -1405,13 +1425,13 @@ def display_page(pathname, compare_value):
                         {"label": "5 Years (1d interval)", "value": "5y"},
                         {"label": "Max (1wk interval)", "value": "max"}
                     ],
-                    value="1d",  
+                    value="1d",
                     clearable=False,
                     style={'width': '200px'}
                     ),
-    
+
     dcc.Graph(id="real-time-stock-graph", style={'height': '500px', 'width': '100%'}),
-    
+
     # Interval component to refresh data
     dcc.Interval(id="interval-component", interval=5000, n_intervals=0)
 ]),
@@ -1507,7 +1527,7 @@ def update_company_graphic_balance(pathname, slider_value):
 )
 def update_real_time_stock_graph(pathname, n_intervals, selected_period):
     """Fetches and updates stock data based on the selected time period, ensuring correct intervals."""
-    
+
     # Extract the company name from the pathname
     company_name = pathname.split('/')[-1]
 
@@ -1581,10 +1601,10 @@ def update_company_cash(pathname, slider_value):
 )
 def update_equity_bond(pathname, slider_value):
     """Updates the Equity Bond Yield graph based on the selected company and year."""
-    
+
     # Define the list of years corresponding to slider indices
     years = ['2021', '2022', '2023', '2024']
-    
+
     # Convert the slider numeric value to the corresponding year string
     selected_year = years[slider_value]
 
