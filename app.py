@@ -695,6 +695,26 @@ def generate_equity_bond(company, selected_year, company_dataframe):
         marker_color=bar_color
     ))
 
+    fig.add_shape(
+        type='line',
+        x0=0, x1=1,  # Use full plot width
+        y0=4.4, y1=4.4,
+        xref='paper',
+        yref='y',
+        line=dict(color='white', dash='dash'),
+    )
+
+    # Optional: Add annotation to label it
+    fig.add_annotation(
+        x=1,
+        y=4.55,  # Slightly above the line
+        xref='paper',
+        yref='y',
+        text='10Y Gov Bond (4.40%)',
+        showarrow=False,
+        font=dict(color='white')
+    )
+
     fig.update_layout(
         title=f"Equity Bond Yield Visual for {ticker} ({selected_year})",
         xaxis_title="Year",
