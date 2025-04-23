@@ -1408,9 +1408,9 @@ def display_page(pathname, compare_value):
             html.H1(f"Details for {company_name}"),
             html.Br(),
             html.Div([
-                html.H3("Company Summary"),
-                html.P(company_summary, style={'fontSize': '16px', 'color': '#333'})
-            ], style={'padding': '20px', 'border': '1px solid #ddd', 'borderRadius': '5px', 'backgroundColor': '#f9f9f9'}),
+                html.H3("Company Summary", style={"color": '#f9f9f9'}),
+                html.P(company_summary, style={'fontSize': '16px', 'color': '#f9f9f9'}), #333
+            ], style={'padding': '20px', 'border': '1px solid #ddd', 'borderRadius': '5px', 'backgroundColor': '#121212'}),#f9f9f9
             html.Div([
                 html.Label("Select Time Period:", style={'color': 'white'}),
                 dcc.Dropdown(
@@ -1453,7 +1453,7 @@ def display_page(pathname, compare_value):
             # Bottom graph
             dbc.Row([
                 dbc.Col(dcc.Graph(id='company-balance-graphic', style={'height': '500px', 'width': '100%'}), width=6),
-                dbc.Col(dcc.Graph(id='equity-bond-graph', style={'height': '500px', 'width': '100%'}), width=3)
+                dbc.Col(dcc.Graph(id='equity-bond-graph', style={'height': '500px', 'width': '100%'}), width=6)
             ], style={'width': '100%'}),
 
             # Back Button
