@@ -305,7 +305,7 @@ def generate_balance_visual(company, selected_year, company_dataframe):
     if not matched_tickers.empty:
         ticker = matched_tickers.values[0]
         financial_metrics = load_data(ticker, years=[selected_year])  # Load data for the specific year
-        print(f"this is financial metrics {financial_metrics}")
+        #print(f"this is financial metrics {financial_metrics}")
 
         # Replace this with actual financial metrics from `financial_data`
         data = {
@@ -631,6 +631,20 @@ def generate_equity_bond(company, selected_year, company_dataframe):
 
     # Hardcoded average S&P 500 equity bond yields
     sp500_avg_yields = {'2021': 5.22, '2022': 4.82, '2023': 4.85, '2024': 5.41}
+    # Hardcoded industry equity bond yields
+    industry_avg_yields = {
+        'Industrials': {'2021': 3.88, '2022': 3.98, '2023': 4.21, '2024': 4.91},
+        'Health Care': {'2021': 5.3, '2022': 5.32, '2023': 3.83, '2024': 3.55},
+        'Information Technology': {'2021': 3.42, '2022': 2.65, '2023': 2.66, '2024': 2.04},
+        'Utilities': {'2021': 2.88, '2022': 3.33, '2023': 4.65, '2024': 5.27},
+        'Financials': {'2021': 8.83, '2022': 6.23, '2023': 6.39, '2024': 7.91},
+        'Materials': {'2021': 7.66, '2022': 7.83, '2023': 4.97, '2024': 5.32},
+        'Consumer Discretionary': {'2021': 2.41, '2022': 1.24, '2023': 2.91, '2024': 3.92},
+        'Real Estate': {'2021': 2.86, '2022': 2.96, '2023': 2.64, '2024': 2.31},
+        'Communication Services': {'2021': 5.2, '2022': 3.43, '2023': 4.71, '2024': 6.09},
+        'Consumer Staples': {'2021': 4.87, '2022': 4.91, '2023': 5.71, '2024': 5.71},
+        'Energy': {'2021': 6.65, '2022': 18.18, '2023': 12.67, '2024': 10.19}
+    }
 
     if not company or not selected_year:
         print("DEBUG: Missing company or year")
@@ -649,6 +663,14 @@ def generate_equity_bond(company, selected_year, company_dataframe):
         return go.Figure()
 
     ticker = matched_tickers.values[0]
+    # Get the industry from the DataFrame
+    industry = company_dataframe[company_dataframe['Ticker'] == ticker]['Industry'].values
+    industry = industry[0] if len(industry) > 0 else "Unknown"
+    print(f"This is the industry: {industry}")
+
+
+    industry_yield = industry_avg_yields.get(industry, {}).get(selected_year, None)
+
 
     # Load financial data for multiple years to normalize axis
     years = ['2021', '2022', '2023', '2024']
@@ -709,6 +731,17 @@ def generate_equity_bond(company, selected_year, company_dataframe):
         marker_color='white'
     ))
 
+    if industry_yield is not None:
+        fig.add_trace(go.Bar(
+            name=f'{industry} Avg',
+            x=[selected_year],
+            y=[industry_yield],
+            text=[f"{industry_yield:.2f}%"],
+            textposition='outside',
+            marker_color='orange'
+        ))
+
+
     # Add dotted bond yield line
     fig.add_shape(
         type='line',
@@ -732,7 +765,7 @@ def generate_equity_bond(company, selected_year, company_dataframe):
 
     # Layout
     fig.update_layout(
-        title=f"Equity Bond Yield: {ticker} vs S&P 500 Avg ({selected_year})",
+        title=f"{ticker} Equity Bond Yield vs {industry} & S&P 500 Avg ({selected_year})",
         xaxis_title="Year",
         yaxis_title="Equity Bond Yield (%)",
         yaxis=dict(range=[y_min, y_max]),
@@ -792,7 +825,7 @@ def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
     pd.set_option('display.max_columns', None)
     #print(balance_sheet)
     cashflow_statement = ystock.cashflow  # This fetches the cash flow statement
-    print(cashflow_statement)
+    #print(cashflow_statement)
     # Fetch the stock's information (including shares outstanding)
     stock_info = ystock.info
     outstanding_shares = stock_info.get('sharesOutstanding')
@@ -937,9 +970,9 @@ def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
                     pretax_per_share = value / outstanding_shares
                     market_cap_calc = pretax_per_share * outstanding_shares
                     Equity_Bond = (pretax_per_share / current_price) * 100
-                    #if isinstance(Equity_Bond, (np.ndarray, pd.Series)):
-                        #if Equity_Bond.size == 1:
-                            #print(f"Equity Bond for {ticker} {year}: {Equity_Bond.item()}%")
+                    if isinstance(Equity_Bond, (np.ndarray, pd.Series)):
+                        if Equity_Bond.size == 1:
+                            print(f"Equity Bond for {ticker} {year}: {Equity_Bond.item()}%")
                         #else:
                             #print(f"Equity Bond for {ticker} {year}: Multiple values or missing data")
                     #else:
