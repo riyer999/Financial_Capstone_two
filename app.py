@@ -10,6 +10,7 @@ from plotly.subplots import make_subplots
 import plotly.express as px
 from yahooquery import Ticker
 from fuzzywuzzy import process
+import dash_iconify
 
 
 #test1
@@ -1261,130 +1262,109 @@ app.layout = dbc.Container([
 main_page_layout = html.Div([
     dcc.Graph(id='treemap-graph', figure=create_treemap())
 ])
-@app.callback(
-    Output('autocomplete-dropdown1', 'value'),  # Set the dropdown's value
-    Input('autocomplete-dropdown1', 'value')  # Triggered when the user types or selects
-)
-def persist_value(selected_value):
-    return selected_value  # Return the same value to keep it displayed
-@app.callback(
-    [Output("graph1", "figure"), Output("graph1-container", "style"),
-     ],
-    [Input("autocomplete-dropdown1", "value"), Input("year-dropdown-1", "value")]
-)
-def update_graph1(company_name, selected_year):
-    return generate_sankey(company_name, selected_year, treemap_df)
-@app.callback(
-    Output("balance-graph-1", "figure"),
-    [Input("autocomplete-dropdown1", "value"), Input("year-dropdown-1", "value")]
-)
-def graph3(company_name, selected_year):
-    return generate_balance_visual(company_name, selected_year, treemap_df)
-@app.callback(
-    [Output("graph2", "figure"), Output("graph2-container", "style")],
-    [Input("autocomplete-dropdown2", "value"), Input("year-dropdown-2", "value")]
-)
-def update_graph2(company_name, selected_year):
-    return generate_sankey(company_name, selected_year, treemap_df)
-@app.callback(
-    Output("balance-graph-2", "figure"),
-    [Input("autocomplete-dropdown2", "value"), Input("year-dropdown-2", "value")]
-)
+
 def graph4(company_name, selected_year):
     return generate_balance_visual(company_name, selected_year, treemap_df)
 def generate_graph(company_name, selected_year):
     return generate_sankey(company_name, selected_year, treemap_df) #new concise way of calling the sankey code
 
+
 compare_page_layout = html.Div([
-    html.H1("About Us"),
-    #html.P("Here you can compare different companies."),
-
-    # Wrapper for the two columns
     html.Div([
+        html.H1("About Finsight", style={
+            'color': 'white',
+            'textAlign': 'center',
+            'fontSize': '48px',
+            'marginTop': '30px',
+            'marginBottom': '10px',
+            'fontWeight': 'bold'
+        }),
+        html.Hr(style={'width': '60%', 'borderTop': '2px solid #2f2f2f'}),
+
+        html.Div([
+            html.Img(src='/assets/download.png', style={
+                'width': '100%',
+                'maxWidth': '600px',
+                'margin': '0 auto',
+                'display': 'block',
+                'borderRadius': '8px',
+            })
+        ], style={'textAlign': 'center', 'marginBottom': '20px'}),
 
         html.Div([
             html.Div([
-                html.Label("Company 1 Search", style={'color': 'white'}),
-                dcc.Dropdown(
-                    id="autocomplete-dropdown1",
-                    options=autocomplete_options1,
-                    placeholder="Company 1 Search...",
-                    style={'width': 200, 'backgroundColor': 'white', 'color': 'black'},
-                    searchable=True,
-                    multi=False,
-                ),
+                dash_iconify.DashIconify(icon="mdi:finance",  width=40, style={'marginRight': '15px', 'color': 'white'}),
+                html.H2("Our Mission", style={'color': '#ffffff', 'fontSize': '28px', 'margin': 0}),
+            ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '10px'}),
 
-            ], style={'padding': '10px'}),
+            html.P(
+                "Finsight empowers users to quickly assess a company's financial health with high-impact visuals drawn from real-time data.",
+                style={'color': '#dcdcdc', 'fontSize': '18px', 'lineHeight': '1.7'}
+            ),
 
-            html.Div([
-                html.Label("Select Year", style={'color': 'white'}),
-                dcc.Dropdown(
-                    id="year-dropdown-1",
-                    options=[{"label": str(year), "value": str(year)} for year in range(2021, 2025)],
-                    placeholder="Select Year"
-                ),
-            ], style={'padding': '10px'}),
-
-            # Graph 1
-            html.Div([
-                dcc.Graph(id="graph1", style={'width': '100%', 'height': '70vh'}),  # Increased graph height
-            ], id="graph1-container", style={'padding': '10px', 'display': 'block'}),
-
-            # New Graph: balance-graph-1
-            dcc.Graph(id="balance-graph-1", style={'width': '100%', 'height': '70vh'}),  # New graph 1
-
-        ], style={'flex': '2', 'padding': '10px', 'border': '1px solid #ccc'}),
-
-        html.Div([
-            html.Div([
-                html.Label("Company 2 Search", style={'color': 'white'}),
-                dcc.Dropdown(
-                    id="autocomplete-dropdown2",
-                    options=autocomplete_options1,
-                    placeholder="Company 2 Search...",
-                    style={'width': 200, 'backgroundColor': 'white', 'color': 'black'},
-                    searchable=True,
-                    multi=False,
-                ),
-            ], style={'padding': '10px'}),
+            html.Br(),
 
             html.Div([
-                html.Label("Select Year", style={'color': 'white'}),
-                dcc.Dropdown(
-                    id="year-dropdown-2",
-                    options=[{"label": str(year), "value": str(year)} for year in range(2021, 2025)],
-                    placeholder="Select Year"
-                ),
-            ], style={'padding': '10px'}),
+                dash_iconify.DashIconify(icon="mdi:chart-line", width=40, style={'marginRight': '15px', 'color': 'white'}),
+                html.H2("How It Works", style={'color': '#ffffff', 'fontSize': '28px', 'margin': 0}),
+            ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '10px'}),
 
-            # Graph 2
+            html.P(
+                "We transform financial statement data into four intuitive visuals that make a company's performance easy to understand. "
+                "These visuals provide a clear, at-a-glance view of a company's health, benchmarked against the S&P 500 and its industry.",
+                style={'color': '#dcdcdc', 'fontSize': '18px', 'lineHeight': '1.7'}
+            ),
+
+            html.Br(),
+
             html.Div([
-                dcc.Graph(id="graph2", style={'width': '100%', 'height': '70vh'}),  # Increased graph height
-            ], id="graph2-container", style={'padding': '10px', 'display': 'block'}),
+                dash_iconify.DashIconify(icon="mdi:rocket-launch-outline",  width=40, style={'marginRight': '15px', 'color': 'white'}),
+                html.H2("Who It’s For", style={'color': '#ffffff', 'fontSize': '28px', 'margin': 0}),
+            ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '10px'}),
 
-            # New Graph: balance-graph-2
-            dcc.Graph(id="balance-graph-2", style={'width': '100%', 'height': '70vh'}),  # New graph 2
+            html.P(
+                "Whether you're a retail investor, student, or industry analyst, Finsight brings financial data to life, "
+                "speeding up your understanding and decision-making process.",
+                style={'color': '#dcdcdc', 'fontSize': '18px', 'lineHeight': '1.7'}
+            ),
 
-        ], style={'flex': '2', 'padding': '10px', 'border': '1px solid #ccc'}),
-        html.A(
-            html.Button("Back to Treemap", id="back-button", style={
-                'position': 'fixed',  # Position the button relative to the viewport
-                'bottom': '10px',  # Distance from the bottom edge
-                'left': '10px',  # Distance from the left edge
-                'zIndex': '1000',  # Ensure it appears above other elements
-                'backgroundColor': '#007bff',  # Optional: button color
-                'color': 'white',  # Optional: text color
-                'padding': '10px 20px',  # Optional: button padding
-                'border': 'none',  # Optional: button border
-                'borderRadius': '5px',  # Optional: rounded corners
-                'cursor': 'pointer'  # Optional: pointer cursor on hover
-            }),
-            href="/"  # URL to navigate back to the root page
-        )
+        ], style={
+            'maxWidth': '800px',
+            'margin': 'auto',
+            'backgroundColor': '#1c1c1e',
+            'padding': '40px',
+            'borderRadius': '12px',
+            'boxShadow': '0 4px 12px rgba(0, 0, 0, 0.5)',
+            'animation': 'fadeIn 1s ease-in-out'
+        })
+    ]),
 
-    ], style={'display': 'flex', 'flexDirection': 'row', 'gap': '40px', 'width': '100%', 'maxWidth': '2000px',
-              'margin': '0 auto'})
-], style={'width': '190%'})
+    html.A(
+        html.Button("← Back to Home", id="back-button", style={
+            'position': 'fixed',
+            'bottom': '20px',
+            'left': '20px',
+            'zIndex': '1000',
+            'backgroundColor': '#1f6feb',
+            'color': 'white',
+            'padding': '12px 24px',
+            'fontSize': '16px',
+            'border': 'none',
+            'borderRadius': '6px',
+            'cursor': 'pointer',
+            'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.3)'
+        }),
+        href="/"
+    ),
+
+], style={
+    'backgroundColor': '#0c0c0d',
+    'minHeight': '100vh',
+    'paddingBottom': '80px',
+    'fontFamily': 'Segoe UI, sans-serif'
+})
+
+
 
 initial_treemap_fig = create_treemap()
 
@@ -1491,7 +1471,7 @@ def display_page(pathname, compare_value):
 
             # Back Button
             html.A(
-                html.Button("Back to Treemap", id="back-button", style={
+                html.Button("Back to Home", id="back-button", style={
                     'position': 'fixed',
                     'bottom': '10px',
                     'left': '10px',
