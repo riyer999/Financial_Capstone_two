@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import numpy as np
 import pickle
+import re
 from dash import Dash, dash, dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
@@ -11,9 +12,6 @@ import plotly.express as px
 from yahooquery import Ticker
 from fuzzywuzzy import process
 import dash_iconify
-
-
-#test1
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], meta_tags=[
     {"name": "viewport", "content": "width=device-width, initial-scale=1"}
@@ -1215,10 +1213,11 @@ app.layout = dbc.Container([
     html.Div(id='sidebar', children=[
         html.Div([
             html.H1([
-                "FinSight",
+                html.Span("FinSight", style={ 'font-weight': 'bold', 'font-size': '1.2em'}),
                 html.Br(),
-                html.Span("Visualization of Company Financials")
+                "Visualization of Company Financials"
             ], style={'color': '#e6e6e6'}),
+
             html.P("Search or Click on a Company to view their financials!", style={'color': '#cccccc', 'font-size': '18px'})
         ], style={"vertical-align": "top", "height": 320}),
 
@@ -1271,7 +1270,7 @@ def generate_graph(company_name, selected_year):
 
 compare_page_layout = html.Div([
     html.Div([
-        html.H1("About Finsight", style={
+        html.H1("About FinSight", style={
             'color': 'white',
             'textAlign': 'center',
             'fontSize': '48px',
@@ -1284,7 +1283,7 @@ compare_page_layout = html.Div([
         html.Div([
             html.Img(src='/assets/download.png', style={
                 'width': '100%',
-                'maxWidth': '600px',
+                'maxWidth': '350px',
                 'margin': '0 auto',
                 'display': 'block',
                 'borderRadius': '8px',
@@ -1412,17 +1411,41 @@ def display_page(pathname, compare_value):
 
         # Get company summary dynamically
         company_summary = get_company_summary(company_name, treemap_df, nasdaq_df)
-
+        cleaned_name = company_name.replace("(the)", "", 1).strip().title()
+        cleaned_name = re.sub(r"\s*\(the\)", "", company_name, flags=re.IGNORECASE).strip().title()
         # Summarize the company description if available
         if "not found" not in company_summary:
             company_summary = simple_summarizer(company_summary)
 
         return html.Div([
-            html.H1(f"Details for {company_name}"),
+            html.H1(
+                f"Details for {cleaned_name}",
+                style={"fontFamily": "Montserrat, sans-serif", "color": "#f9f9f9", "fontWeight": "700"}
+            ),
+
             html.Br(),
             html.Div([
-                html.H3("Company Summary", style={"color": '#f9f9f9'}),
-                html.P(company_summary, style={'fontSize': '16px', 'color': '#f9f9f9'}), #333
+                html.H3(
+                    "Company Summary",
+                    style={
+                        "fontFamily": "Montserrat, sans-serif",
+                        "fontWeight": "500",
+                        "fontSize": "20px",
+                        "color": "#f9f9f9"
+                    }
+                ),
+
+                html.P(
+                    company_summary,
+                    style={
+                        'fontFamily': 'Montserrat, sans-serif',
+                        'fontSize': '16px',
+                        'lineHeight': '1.6',
+                        'color': '#f9f9f9',
+                        'marginTop': '10px'
+                    }
+                ),
+
             ], style={'padding': '20px', 'border': '1px solid #ddd', 'borderRadius': '5px', 'backgroundColor': '#121212'}),#f9f9f9
             html.Div([
                 html.Label("Select Time Period:", style={'color': 'white'}),
@@ -1471,7 +1494,7 @@ def display_page(pathname, compare_value):
 
             # Back Button
             html.A(
-                html.Button("Back to Home", id="back-button", style={
+                html.Button("← Back to Home", id="back-button", style={
                     'position': 'fixed',
                     'bottom': '10px',
                     'left': '10px',
