@@ -688,10 +688,18 @@ def generate_equity_bond(company, selected_year, company_dataframe):
     yields = []
     for year in years:
         pretax_income = financial_metrics_all_years.get(f'Pretax_Income_{year}', 0)
-        if pretax_income != 0:
-            pretax_per_share = pretax_income / shares_outstanding
-            yield_pct = (pretax_per_share / stock_price) * 100
-            yields.append(yield_pct)
+
+        # Skip if it's a Series with all zeros or missing
+        if isinstance(pretax_income, pd.Series):
+            if (pretax_income == 0).all():
+                continue
+        elif pretax_income == 0:
+            continue
+
+        # Calculate yield if we passed the checks
+        pretax_per_share = pretax_income / shares_outstanding
+        yield_pct = (pretax_per_share / stock_price) * 100
+        yields.append(yield_pct)
 
     if not yields:
         print(f"DEBUG: No yield values for {ticker}")
