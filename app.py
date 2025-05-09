@@ -9,7 +9,6 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
-from yahooquery import Ticker
 from fuzzywuzzy import process
 import dash_iconify
 
@@ -825,7 +824,7 @@ def load_data(ticker, years=["2021", "2022", "2023", "2024"]):
 
     #print(variable_names)
     # Fetch the financial data
-    income_statement = ystock.incomestmt
+    income_statement = ystock.financials
 
     balance_sheet = ystock.balance_sheet
     pd.set_option('display.max_rows', None)
@@ -1187,9 +1186,11 @@ def get_company_summary(company_name, treemap_df, nasdaq_df):
     if not ticker:
         return f"Company '{company_name}' not found."
 
-    # Fetch company summary
-    stock = Ticker(ticker)
-    summary = stock.asset_profile.get(ticker, {}).get('longBusinessSummary', 'Summary not available.')
+    try:
+        summary = yf.Ticker(ticker).info.get("longBusinessSummary", "No summary available.")
+    except Exception as e:
+        summary = f"Error retrieving summary for {ticker}: {e}"
+
     return summary
 
 
@@ -1667,7 +1668,7 @@ def update_equity_bond(pathname, slider_value):
 
 if __name__ == "__main__":
 
-    app.run_server(debug=True, port=8060)
+    app.run(debug=True, port=8060)
 
 
 
